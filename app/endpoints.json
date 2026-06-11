@@ -1,0 +1,3401 @@
+[
+  {
+    "path": "devices/items/{serial}/firmware",
+    "name": "DEVICE FIRMWARE",
+    "type": "string",
+    "access": "readonly",
+    "description": "Current device firmware version"
+  },
+  {
+    "path": "devices/items/{serial}/type",
+    "name": "DEVICE TYPE",
+    "type": "string",
+    "access": "readonly",
+    "description": "Device type name"
+  },
+  {
+    "path": "devices/statistics/associated-count",
+    "name": "ASSOCIATED DEVICES COUNT",
+    "type": "int",
+    "access": "readonly",
+    "range": "0 - 2200",
+    "description": "The number of devices currently being controlled by the processor"
+  },
+  {
+    "path": "devices/statistics/error-count",
+    "name": "ERROR DEVICES COUNT",
+    "type": "int",
+    "access": "readonly",
+    "range": "0 - 2048",
+    "description": "The number of online devices currently reporting an error state"
+  },
+  {
+    "path": "devices/statistics/online-count",
+    "name": "ONLINE DEVICE COUNT",
+    "type": "int",
+    "access": "readonly",
+    "range": "0 - 2048",
+    "description": "The number of online devices currently detected by the processor"
+  },
+  {
+    "path": "groups/items/{number}/brightness",
+    "name": "GROUP BRIGHTNESS",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 10000",
+    "units": "Nits",
+    "description": "Gets or sets the group output brightness/luminance"
+  },
+  {
+    "path": "groups/items/{number}/brightness-limit/enabled",
+    "name": "GROUP BRIGHTNESS LIMIT",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Enables or disables group brightness limit \u00a9 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025 Page 17 of 77"
+  },
+  {
+    "path": "groups/items/{number}/brightness-limit/value",
+    "name": "GROUP BRIGHTNESS LIMIT VALUE",
+    "type": "int",
+    "access": "readonly",
+    "range": "0 - 10000",
+    "units": "Nits",
+    "description": "Current group maximum brightness value if brightness limit enabled"
+  },
+  {
+    "path": "groups/items/{number}/colour-temperature",
+    "name": "GROUP COLOUR TEMPERATURE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "2000 - 11000",
+    "units": "Kelvin",
+    "description": "Gets or sets the group colour temperature"
+  },
+  {
+    "path": "groups/items/{number}/dark-magic/enabled",
+    "name": "GROUP DARK MAGIC ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables group Dark Magic"
+  },
+  {
+    "path": "groups/items/{number}/extended-bit-depth/enabled",
+    "name": "GROUP EXTENDED BIT DEPTH",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables group extended bit depth"
+  },
+  {
+    "path": "groups/items/{number}/gains/blue",
+    "name": "GROUP BLUE GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the group blue gain"
+  },
+  {
+    "path": "groups/items/{number}/gains/green",
+    "name": "GROUP GREEN GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the group green gain"
+  },
+  {
+    "path": "groups/items/{number}/gains/intensity",
+    "name": "GROUP INTENSITY GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the group intensity gain"
+  },
+  {
+    "path": "groups/items/{number}/gains/red",
+    "name": "GROUP RED GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the group red gain"
+  },
+  {
+    "path": "groups/items/{number}/gamma",
+    "name": "GROUP OUTPUT GAMMA",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.2 - 4.0",
+    "decimal_places": "2",
+    "description": "Gets or sets the group gamma value"
+  },
+  {
+    "path": "groups/items/{number}/global-colour-override",
+    "name": "GROUP GLOBAL COLOUR OVERRIDE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables group global colour override"
+  },
+  {
+    "path": "groups/items/{number}/global-gains-override",
+    "name": "GROUP GLOBAL GAINS OVERRIDE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables group global gains override"
+  },
+  {
+    "path": "groups/items/{number}/global-startracker-override",
+    "name": "GROUP GLOBAL STARTRACKER OVERRIDE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables global StarTracker override for this group"
+  },
+  {
+    "path": "groups/items/{number}/name",
+    "name": "GROUP NAME",
+    "type": "string",
+    "access": "readwrite",
+    "description": "Gets or sets the group name"
+  },
+  {
+    "path": "groups/items/{number}/overdrive/enabled",
+    "name": "GROUP OVERDRIVE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables group brightness overdrive"
+  },
+  {
+    "path": "groups/items/{number}/puretone/enabled",
+    "name": "GROUP PURE TONE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables group PureTone"
+  },
+  {
+    "path": "groups/items/{number}/startracker/enabled",
+    "name": "GROUP STARTRACKER ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables markers in group StarTracker override"
+  },
+  {
+    "path": "input/active/source/port-number",
+    "name": "INPUT PORT NUMBER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 2",
+    "description": "Which physical port instance is currently enabled for video input. For example, SDI A = port 1, SDI B = port 2. The available number of port instances for any port type will vary based on the processor hardware variant."
+  },
+  {
+    "path": "input/active/source/port-type",
+    "name": "INPUT PORT TYPE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Which physical port instance is currently enabled for video input. The available types will vary based on the processor hardware variant.",
+    "supported_values": [
+      "dvi",
+      "hdmi",
+      "sdi"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/controls/colour-space/colour",
+    "name": "DVI INPUT COLOUR SPACE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the colour space used for the incoming DVI content",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/controls/dvi-colour-format",
+    "name": "INPUT DVI COLOUR FORMAT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the colour format applied by the processor to the input for DVI input",
+    "supported_values": [
+      "rgb",
+      "ypbpr601",
+      "ypbpr709"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/blue/gamut",
+    "name": "DVI DYNACAL BLUE GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Blue component of DVI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/blue/x",
+    "name": "DVI DYNACAL BLUE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Blue component X value of DVI input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/blue/y",
+    "name": "DVI DYNACAL BLUE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "DVI component Y value of video input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/green/gamut",
+    "name": "DVI DYNACAL GREEN GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Green component of DVI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/green/x",
+    "name": "DVI DYNACAL GREEN X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Green component X value of DVI input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/green/y",
+    "name": "DVI DYNACAL GREEN Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Green component Y value of DVI input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/red/gamut",
+    "name": "DVI DYNACAL RED GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Red component of DVI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/red/x",
+    "name": "DVI DYNACAL RED X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Red component X value of DVI input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/red/y",
+    "name": "DVI DYNACAL RED Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Red component Y value of DVI input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/white/colour-temperature",
+    "name": "Page 21 of 77",
+    "type": "int",
+    "access": "readwrite",
+    "range": "2000 - 11000",
+    "units": "Kelvin",
+    "description": "DVI input white component colour temperature"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/white/gamut",
+    "name": "DVI DYNACAL WHITE GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "White component of DVI input colour space. Set to 'Colour Temperature' to control this white-only parameter",
+    "supported_values": [
+      "d65",
+      "aces",
+      "colour-temperature",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/white/x",
+    "name": "DVI DYNACAL WHITE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "White component X value of DVI input colour space"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/dynacal/white/y",
+    "name": "DVI DYNACAL WHITE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "DVI input white component Y value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/meta-data/refresh-rate",
+    "name": "DVI INPUT REFRESH RATE",
+    "type": "float",
+    "access": "readonly",
+    "range": "24 - 250",
+    "units": "Hertz",
+    "decimal_places": "1",
+    "description": "DVI input refresh rate"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/meta-data/resolution/height",
+    "name": "DVI INPUT RESOLUTION HEIGHT",
+    "type": "int",
+    "access": "readonly",
+    "range": "32 - 4095",
+    "units": "Pixels",
+    "description": "DVI input height"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/meta-data/resolution/width",
+    "name": "DVI INPUT RESOLUTION WIDTH",
+    "type": "int",
+    "access": "readonly",
+    "range": "32 - 4096",
+    "units": "Pixels",
+    "description": "DVI input width"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/black-level",
+    "name": "Page 22 of 77",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets black level of a DVI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/contrast",
+    "name": "DVI INPUT CONTRAST",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets contrast of a DVI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/highlight/blue",
+    "name": "DVI BLUE HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets blue highlight of a DVI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/highlight/green",
+    "name": "DVI GREEN HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets green highlight of a DVI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/highlight/red",
+    "name": "DVI RED HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets red highlight of a DVI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/hue",
+    "name": "DVI INPUT HUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-180 - 180",
+    "units": "Degrees",
+    "description": "Gets or sets hue of a DVI video input. 0\u00c2\u00b0 is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/saturation",
+    "name": "DVI INPUT SATURATION",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets saturation of a DVI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/shadow/blue",
+    "name": "Page 23 of 77",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets blue shadow of a DVI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/shadow/green",
+    "name": "DVI GREEN SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets green shadow of a DVI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/dvi/{dvi-port-number}/proc-amp/shadow/red",
+    "name": "RED SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets red shadow of a DVI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/colour-space/colour",
+    "name": "HDMI INPUT COLOUR SPACE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the colour space used for the incoming HDMI content",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/colour-space/info-frame-override-enabled",
+    "name": "INFOFRAME OVERRIDE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables InfoFrame override"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/hdmi-colour-format",
+    "name": "HDMI INPUT COLOUR FORMAT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the colour format applied by the processor to the input for HDMI input",
+    "supported_values": [
+      "from-input",
+      "rgb",
+      "ycbcr"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/hdr/format",
+    "name": "HDMI INPUT HDR FORMAT OVERRIDE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the HDR format applied by the processor to the input for HDMI input",
+    "supported_values": [
+      "from-input",
+      "standard-dynamic-range",
+      "perceptual-quantiser",
+      "hybrid-log-gamma"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/auto-brighten",
+    "name": "HDMI PQ AUTO BRIGHTEN",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables PQ auto brighten for HDMI input"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/gain",
+    "name": "HDMI PQ GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 10.0",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the PQ gain for HDMI input"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/max-cll-override/enabled",
+    "name": "HDMI PQ MAXCLL OVERRIDE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables PQ MaxCLL override for HDMI input"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/hdr/pq/max-cll-override/luminance",
+    "name": "HDMI PQ MAXCLL OVERRIDE LUMINANCE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 10000",
+    "units": "Nits",
+    "description": "Gets or sets the value of the PQ MaxCLL override luminance for HDMI input"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/controls/quantisation-range",
+    "name": "HDMI INPUT QUANTISATION RANGE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the quantisation range applied by the processor to the HDMI input",
+    "supported_values": [
+      "from-input",
+      "full",
+      "limited"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/blue/gamut",
+    "name": "HDMI DYNACAL BLUE GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Blue component of HDMI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/blue/x",
+    "name": "HDMI DYNACAL BLUE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Blue component X value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/blue/y",
+    "name": "HDMI DYNACAL BLUE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Blue component Y value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/green/gamut",
+    "name": "HDMI DYNACAL GREEN GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Green component of HDMI input colour space \u00a9 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025 Page 25 of 77",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/green/x",
+    "name": "HDMI DYNACAL GREEN X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Green component X value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/green/y",
+    "name": "HDMI DYNACAL GREEN Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Green component Y value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/red/gamut",
+    "name": "HDMI DYNACAL RED GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Red component of HDMI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/red/x",
+    "name": "HDMI DYNACAL RED X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Red component X value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/red/y",
+    "name": "HDMI DYNACAL RED Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Red component Y value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/white/colour-temperature",
+    "name": "HDMI DYNACAL WHITE COLOUR TEMPERATURE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "2000 - 11000",
+    "units": "Kelvin",
+    "description": "HDMI input white component colour temperature"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/white/gamut",
+    "name": "HDMI DYNACAL WHITE GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "White component of HDMI input colour space. Set to 'Colour Temperature' to control this white- only parameter",
+    "supported_values": [
+      "d65",
+      "aces",
+      "colour-temperature",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/white/x",
+    "name": "HDMI DYNACAL WHITE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "White component X value of HDMI input colour space"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/dynacal/white/y",
+    "name": "HDMI DYNACAL WHITE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "HDMI input white component Y value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/meta-data/bit-depth",
+    "name": "HDMI INPUT BIT DEPTH",
+    "type": "int",
+    "access": "readonly",
+    "range": "8 - 12",
+    "units": "Bits",
+    "description": "Gets bit depth of HDMI video input. Valid values are 8, 10, and 12"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/meta-data/hdr/format",
+    "name": "HDMI INPUT HDR FORMAT",
+    "type": "enum",
+    "access": "readonly",
+    "description": "HDR format reported by the HDMI input",
+    "supported_values": [
+      "standard-dynamic-range",
+      "perceptual-quantiser",
+      "hybrid-log-gamma"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/meta-data/refresh-rate",
+    "name": "HDMI INPUT REFRESH RATE",
+    "type": "float",
+    "access": "readonly",
+    "range": "24 - 250",
+    "units": "Hertz",
+    "decimal_places": "1",
+    "description": "Hdmi input refresh rate"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/meta-data/resolution/height",
+    "name": "HDMI INPUT RESOLUTION HEIGHT",
+    "type": "int",
+    "access": "readonly",
+    "range": "32 - 4095",
+    "units": "Pixels",
+    "description": "HDMI input height"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/meta-data/resolution/width",
+    "name": "HDMI INPUT RESOLUTION WIDTH",
+    "type": "int",
+    "access": "readonly",
+    "range": "32 - 4096",
+    "units": "Pixels",
+    "description": "HDMI input width"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/meta-data/sampling",
+    "name": "HDMI INPUT SAMPLING",
+    "type": "enum",
+    "access": "readonly",
+    "description": "Gets current HDMI sampling scheme",
+    "supported_values": [
+      "rgb",
+      "ycbcr422",
+      "ycbcr444",
+      "ycbcr420"
+    ]
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/black-level",
+    "name": "HDMI INPUT BLACK LEVEL",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets black level of an HDMI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/contrast",
+    "name": "HDMI INPUT CONTRAST",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets contrast of an HDMI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/highlight/blue",
+    "name": "HDMI BLUE HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets blue highlight of an HDMI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/highlight/green",
+    "name": "HDMI GREEN HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets green highlight of an HDMI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/highlight/red",
+    "name": "HDMI RED HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets red highlight of an HDMI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/hue",
+    "name": "HDMI INPUT HUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-180 - 180",
+    "units": "Degrees",
+    "description": "Gets or sets hue of an HDMI video input. 0\u00c2\u00b0 is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/saturation",
+    "name": "HDMI INPUT SATURATION",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets saturation of an HDMI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/shadow/blue",
+    "name": "HDMI BLUE SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets blue shadow of an HDMI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/shadow/green",
+    "name": "HDMI GREEN SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets green shadow of an HDMI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/hdmi/{hdmi-port-number}/proc-amp/shadow/red",
+    "name": "HDMI RED SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets red shadow of an HDMI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/controls/colour-space/colour",
+    "name": "SDI INPUT COLOUR SPACE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the colour space used for the incoming SDI content",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/controls/hdr/format",
+    "name": "SDI INPUT HDR FORMAT OVERRIDE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the HDR format applied by the processor to the input for SDI input",
+    "supported_values": [
+      "from-input",
+      "standard-dynamic-range",
+      "perceptual-quantiser",
+      "hybrid-log-gamma"
+    ]
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/controls/hdr/pq/auto-brighten",
+    "name": "SDI PQ AUTO BRIGHTEN",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables PQ auto brighten for SDI input"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/controls/hdr/pq/gain",
+    "name": "Page 29 of 77",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 10.0",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the PQ gain for SDI input"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/controls/hdr/pq/max-cll-override/enabled",
+    "name": "SDI PQ MAXCLL OVERRIDE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables PQ MaxCLL override for SDI input"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/controls/hdr/pq/max-cll-override/luminance",
+    "name": "SDI PQ MAXCLL OVERRIDE LUMINANCE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 10000",
+    "units": "Nits",
+    "description": "Gets or sets the value of the PQ MaxCLL override luminance for SDI input"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/blue/gamut",
+    "name": "SDI DYNACAL BLUE GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Blue component of SDI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/blue/x",
+    "name": "SDI DYNACAL BLUE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Blue component X value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/blue/y",
+    "name": "SDI DYNACAL BLUE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Blue component Y value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/green/gamut",
+    "name": "SDI DYNACAL GREEN GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Green component of SDI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/green/x",
+    "name": "SDI DYNACAL GREEN X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Green component X value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/green/y",
+    "name": "SDI DYNACAL GREEN Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Green component Y value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/red/gamut",
+    "name": "SDI DYNACAL RED GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Red component of SDI input colour space",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/red/x",
+    "name": "SDI DYNACAL RED X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "Red component X value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/red/y",
+    "name": "SDI DYNACAL RED Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Red component Y value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/white/colour-temperature",
+    "name": "SDI DYNACAL WHITE COLOUR TEMPERATURE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "2000 - 11000",
+    "units": "Kelvin",
+    "description": "SDI input white component colour temperature"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/white/gamut",
+    "name": "SDI DYNACAL WHITE GAMUT",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "White component of SDI input colour space. Set to 'Colour Temperature' to control this white-only parameter",
+    "supported_values": [
+      "d65",
+      "aces",
+      "colour-temperature",
+      "custom"
+    ]
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/white/x",
+    "name": "SDI DYNACAL WHITE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "White component X value of SDI input colour space"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/dynacal/white/y",
+    "name": "SDI DYNACAL WHITE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "SDI input white component Y value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/meta-data/refresh-rate",
+    "name": "SDI INPUT REFRESH RATE",
+    "type": "float",
+    "access": "readonly",
+    "range": "24 - 250",
+    "units": "Hertz",
+    "decimal_places": "1",
+    "description": "SDI input refresh rate"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/meta-data/resolution/height",
+    "name": "SDI INPUT RESOLUTION HEIGHT",
+    "type": "int",
+    "access": "readonly",
+    "range": "32 - 4095",
+    "units": "Pixels",
+    "description": "SDI input height"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/meta-data/resolution/width",
+    "name": "SDI INPUT RESOLUTION WIDTH",
+    "type": "int",
+    "access": "readonly",
+    "range": "32 - 4096",
+    "units": "Pixels",
+    "description": "SDI input width"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/black-level",
+    "name": "SDI INPUT BLACK LEVEL",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets black level of an SDI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/contrast",
+    "name": "SDI INPUT CONTRAST",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets contrast of an SDI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/highlight/blue",
+    "name": "SDI BLUE HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets blue highlight of an SDI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/highlight/green",
+    "name": "SDI GREEN HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets green highlight of an SDI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/highlight/red",
+    "name": "SDI RED HIGHLIGHT",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets red highlight of an SDI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/hue",
+    "name": "SDI INPUT HUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-180 - 180",
+    "units": "Degrees",
+    "description": "Gets or sets hue of an SDI video input. 0\u00c2\u00b0 is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/saturation",
+    "name": "SDI INPUT SATURATION",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets saturation of an SDI video input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/shadow/blue",
+    "name": "SDI BLUE SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets blue shadow of an SDI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/shadow/green",
+    "name": "SDI GREEN SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets green shadow of an SDI input. 100% is the passthough value"
+  },
+  {
+    "path": "input/ports/sdi/{sdi-port-number}/proc-amp/shadow/red",
+    "name": "SDI RED SHADOW",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets red shadow of an SDI video input. 100% is the passthough value"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/blue/mode",
+    "name": "OUTPUT DYNACAL BLUE MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the blue component of panel output colour space",
+    "supported_values": [
+      "achievable",
+      "custom"
+    ]
+  },
+  {
+    "path": "output/dynacal/{panel-type}/blue/x",
+    "name": "OUTPUT DYNACAL BLUE X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "X value of panel output colour space blue component"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/blue/y",
+    "name": "OUTPUT DYNACAL BLUE Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Y value of panel output colour space blue component"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/green/mode",
+    "name": "OUTPUT DYNACAL GREEN MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the green component of panel output colour space",
+    "supported_values": [
+      "achievable",
+      "custom"
+    ]
+  },
+  {
+    "path": "output/dynacal/{panel-type}/green/x",
+    "name": "OUTPUT DYNACAL GREEN X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "X value of panel output colour space green component"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/green/y",
+    "name": "OUTPUT DYNACAL GREEN Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Y value of panel output colour space green component"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/luminance-only-fraction",
+    "name": "OUTPUT DYNACAL LUMINANCE ONLY FRACTION",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the percentage mix of output calibration"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/mode",
+    "name": "OUTPUT DYNACAL MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the panel output colour space",
+    "supported_values": [
+      "match-input",
+      "achievable",
+      "custom"
+    ]
+  },
+  {
+    "path": "output/dynacal/{panel-type}/red/mode",
+    "name": "OUTPUT DYNACAL RED MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the red component of panel output colour space",
+    "supported_values": [
+      "achievable",
+      "custom"
+    ]
+  },
+  {
+    "path": "output/dynacal/{panel-type}/red/x",
+    "name": "OUTPUT DYNACAL RED X",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.8",
+    "decimal_places": "4",
+    "description": "X value of panel output colour space red component"
+  },
+  {
+    "path": "output/dynacal/{panel-type}/red/y",
+    "name": "OUTPUT DYNACAL RED Y",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 0.9",
+    "decimal_places": "4",
+    "description": "Y value of panel output colour space red component"
+  },
+  {
+    "path": "output/global-colour/brightness",
+    "name": "OUTPUT BRIGHTNESS",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-1 - 10000",
+    "units": "Nits",
+    "description": "Write -1 to reset output brightness to calculated common maximum for available fixtures."
+  },
+  {
+    "path": "output/global-colour/brightness-limit/enabled",
+    "name": "BRIGHTNESS LIMIT ENABLED",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Enables or disables global brightness limit"
+  },
+  {
+    "path": "output/global-colour/brightness-limit/value",
+    "name": "BRIGHTNESS LIMIT VALUE",
+    "type": "int",
+    "access": "readonly",
+    "range": "0 - 10000",
+    "units": "Nits",
+    "description": "Current maximum brightness value if brightness limit enabled"
+  },
+  {
+    "path": "output/global-colour/colour-temperature",
+    "name": "OUTPUT COLOUR TEMPERATURE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "2000 - 11000",
+    "units": "Kelvin",
+    "description": "Gets or sets the output colour temperature"
+  },
+  {
+    "path": "output/global-colour/dark-magic/enabled",
+    "name": "DARK MAGIC ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables the processor's Dark Magic feature"
+  },
+  {
+    "path": "output/global-colour/dynacal/highlight-out-of-gamut-pixels-enabled",
+    "name": "HIGHLIGHT OUT OF GAMUT PIXELS ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables DynaCal's out-of-gamut pixel feature"
+  },
+  {
+    "path": "output/global-colour/dynacal/highlight-overbright-pixels-enabled",
+    "name": "HIGHLIGHT OVERBRIGHT PIXELS ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables DynaCal's overbright pixel feature"
+  },
+  {
+    "path": "output/global-colour/extended-bit-depth/enabled",
+    "name": "EXTENDED BIT DEPTH ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables extended bit depth"
+  },
+  {
+    "path": "output/global-colour/gains/blue",
+    "name": "BLUE GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the output blue gain"
+  },
+  {
+    "path": "output/global-colour/gains/green",
+    "name": "GREEN GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the output green gain"
+  },
+  {
+    "path": "output/global-colour/gains/intensity",
+    "name": "INTENSITY GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the output intensity gain"
+  },
+  {
+    "path": "output/global-colour/gains/red",
+    "name": "RED GAIN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the output red gain"
+  },
+  {
+    "path": "output/global-colour/gamma",
+    "name": "OUTPUT GAMMA",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.2 - 4.0",
+    "decimal_places": "2",
+    "description": "Gets or sets the value of the output gamma"
+  },
+  {
+    "path": "output/global-colour/overdrive/enabled",
+    "name": "OVERDRIVE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables global brightness overdrive"
+  },
+  {
+    "path": "output/global-colour/puretone/enabled",
+    "name": "PURE TONE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables PureTone"
+  },
+  {
+    "path": "output/network/bit-depth",
+    "name": "NETWORK BIT DEPTH",
+    "type": "int",
+    "access": "readwrite",
+    "range": "8 - 12",
+    "units": "Bits",
+    "description": "Gets or sets bit depth of video output. Valid values are 8, 10, and 12"
+  },
+  {
+    "path": "output/network/cable-redundancy/loops/{loop-number}/state",
+    "name": "REDUNDANT CABLE LOOP STATE",
+    "type": "string",
+    "access": "readonly",
+    "description": "Current state of cable loop redundancy on the processor in the format : ->, where can be: 'loop- found', 'no-loop-found', 'incorrect-loop-found', or 'one-to-many-error' . is the connected trunk followed by the XD port number (e.g. 'A1'). If is 'no-loop-found', can be 'No connection'."
+  },
+  {
+    "path": "output/network/failover/actions/request-failover",
+    "name": "REQUEST FAILOVER",
+    "type": "string",
+    "access": "writeonly",
+    "description": "Send an empty string to activate processor redundancy"
+  },
+  {
+    "path": "output/network/failover/settings/enabled",
+    "name": "FAILOVER ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables failover mode on the processor"
+  },
+  {
+    "path": "output/network/failover/settings/modes/on-button-press",
+    "name": "BUTTON PRESS FAILOVER MODE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables failover to backup processor when the processor's Blackout/Freeze buttons are pushed"
+  },
+  {
+    "path": "output/network/failover/settings/modes/on-partner-fail",
+    "name": "PARTNER FAILOVER MODE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables partner processor failover when processor failure is detected (e.g. the processor loses power)"
+  },
+  {
+    "path": "output/network/failover/settings/modes/on-partner-video-fail",
+    "name": "PARTNER VIDEO FAILOVER MODE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables partner processor failover on video signal loss"
+  },
+  {
+    "path": "output/network/failover/settings/modes/prefer-primary",
+    "name": "PREFER PRIMARY FAILOVER MODE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "If prefer primary processor failover mode is activated, when primary processor is functioning correctly, it will be automatically always be the active processor"
+  },
+  {
+    "path": "output/network/failover/settings/role",
+    "name": "FAILOVER ROLE",
+    "type": "enum",
+    "access": "readonly",
+    "description": "Is processor's failover role Primary or Backup",
+    "supported_values": [
+      "primary",
+      "backup"
+    ]
+  },
+  {
+    "path": "output/network/failover/state/is-active",
+    "name": "FAILOVER IS ACTIVE",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Whether failover is active on the processor"
+  },
+  {
+    "path": "output/network/failover/state/is-partner-present",
+    "name": "FAILOVER PARTNER IS ONLINE",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Whether the backup processor is currently online and detected"
+  },
+  {
+    "path": "output/network/failover/state/partner-absence-duration",
+    "name": "FAILOVER PARTNER ABSENCE DURATION",
+    "type": "string",
+    "access": "readonly",
+    "description": "How long the backup processor has been absent for"
+  },
+  {
+    "path": "output/network/failover/state/partner-name",
+    "name": "FAILOVER PARTNER NAME",
+    "type": "string",
+    "access": "readonly",
+    "description": "Name of the backup processor"
+  },
+  {
+    "path": "output/network/failover/state/partner-serial",
+    "name": "FAILOVER PARTNER SERIAL",
+    "type": "string",
+    "access": "readonly",
+    "description": "Serial number of the backup processor"
+  },
+  {
+    "path": "output/network/failover/state/partner-video-absence-duration",
+    "name": "FAILOVER PARTNER VIDEO ABSENCE DURATION",
+    "type": "string",
+    "access": "readonly",
+    "description": "Time since backup processor video source was last detected"
+  },
+  {
+    "path": "output/network/frame-rate-multiplier",
+    "name": "NETWORK FRAME RATE MULTIPLIER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 10",
+    "description": "Gets or sets frame rate multiplier of video output. Set value to 1 to disable frame rate multiplication."
+  },
+  {
+    "path": "output/network/frame-remapping/enabled",
+    "name": "FRAME REMAPPING ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Is frame remapping globally enabled or disabled"
+  },
+  {
+    "path": "output/network/frame-remapping/frames/{frame}/blue",
+    "name": "FRAME REMAPPING BLUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets blue value of frame colour"
+  },
+  {
+    "path": "output/network/frame-remapping/frames/{frame}/green",
+    "name": "FRAME REMAPPING GREEN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets green value of frame colour"
+  },
+  {
+    "path": "output/network/frame-remapping/frames/{frame}/mode",
+    "name": "Page 39 of 77",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Is frame mode Colour or Video",
+    "supported_values": [
+      "colour",
+      "video"
+    ]
+  },
+  {
+    "path": "output/network/frame-remapping/frames/{frame}/red",
+    "name": "FRAME REMAPPING RED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets red value of frame colour"
+  },
+  {
+    "path": "output/network/frame-remapping/frames/{frame}/x-offset",
+    "name": "FRAME REMAPPING X OFFSET",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-4095 - 4095",
+    "units": "Pixels",
+    "description": "Gets or sets x offset of frame"
+  },
+  {
+    "path": "output/network/frame-remapping/frames/{frame}/y-offset",
+    "name": "FRAME REMAPPING Y OFFSET",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-4095 - 4095",
+    "units": "Pixels",
+    "description": "Gets or sets y offset of frame"
+  },
+  {
+    "path": "output/network/genlock/internal-rate",
+    "name": "GENLOCKINTERNALSOURCERATE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "23.5 - 251.0",
+    "units": "Hertz",
+    "decimal_places": "4",
+    "description": "Gets or sets current refresh rate for internal genlock source"
+  },
+  {
+    "path": "output/network/genlock/phase-offset/absolute/lines",
+    "name": "GENLOCK PHASE OFFSET LINES",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-9999 - 9999",
+    "description": "Gets or sets genlock phase offset absolute lines value for the processor"
+  },
+  {
+    "path": "output/network/genlock/phase-offset/absolute/pixels",
+    "name": "GENLOCK PHASE OFFSET PIXELS",
+    "type": "int",
+    "access": "readwrite",
+    "range": "-9999 - 9999",
+    "description": "Gets or sets genlock phase offset absolute pixels value for the processor"
+  },
+  {
+    "path": "output/network/genlock/phase-offset/angle",
+    "name": "GENLOCK PHASE OFFSET ANGLE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-360 - 360",
+    "units": "Degrees",
+    "decimal_places": "6",
+    "description": "Gets or sets genlock phase offset angle for the processor"
+  },
+  {
+    "path": "output/network/genlock/phase-offset/fraction",
+    "name": "GENLOCK PHASE OFFSET FRACTION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100 - 100",
+    "units": "Percentage",
+    "decimal_places": "5",
+    "description": "Gets or sets genlock phase offset fraction for the processor"
+  },
+  {
+    "path": "output/network/genlock/phase-offset/mode",
+    "name": "GENLOCK PHASE OFFSET MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets genlock phase offset mode for the processor",
+    "supported_values": [
+      "none",
+      "angle",
+      "fraction",
+      "absolute"
+    ]
+  },
+  {
+    "path": "output/network/genlock/source",
+    "name": "GENLOCK SOURCE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the current genlock source for the processor",
+    "supported_values": [
+      "internal",
+      "sdi",
+      "sdi-a",
+      "sdi-b",
+      "hdmi",
+      "dvi",
+      "ref-in",
+      "active-input"
+    ]
+  },
+  {
+    "path": "output/network/hidden-markers/background-gain",
+    "name": "HIDDENMARKERS BACKGROUND GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets brightness of the video underneath hidden markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/blackout-affects-markers",
+    "name": "HIDDENMARKERS BLACKOUT AFFECTS MARKERS",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Gets or sets whether blackout affects markers as well as video"
+  },
+  {
+    "path": "output/network/hidden-markers/closed-shutter-markers",
+    "name": "CLOSED SHUTTER MARKERS",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Gets or sets whether markers are only shown when camera shutter is closed"
+  },
+  {
+    "path": "output/network/hidden-markers/custom/data",
+    "name": "CUSTOM MARKERS DATA",
+    "type": "bytearray",
+    "access": "readwrite",
+    "description": "Send bulk data in image file format to upload custom markers"
+  },
+  {
+    "path": "output/network/hidden-markers/custom/filename",
+    "name": "Page 41 of 77",
+    "type": "string",
+    "access": "readonly",
+    "description": "The name of the stored custom markers file"
+  },
+  {
+    "path": "output/network/hidden-markers/custom/marker-gain/blue",
+    "name": "CUSTOM MARKERS BLUE GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the blue custom markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/custom/marker-gain/green",
+    "name": "CUSTOM MARKERS GREEN GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the green custom markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/custom/marker-gain/red",
+    "name": "CUSTOM MARKERS RED GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the red custom markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/custom/scaling",
+    "name": "CUSTOM MARKERS SCALING",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets current scaling for hidden markers",
+    "supported_values": [
+      "1:1",
+      "stretch",
+      "fit",
+      "fill"
+    ]
+  },
+  {
+    "path": "output/network/hidden-markers/enabled",
+    "name": "HIDDENMARKERS ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables hidden markers"
+  },
+  {
+    "path": "output/network/hidden-markers/frames-enabled-on",
+    "name": "HIDDENMARKERS FRAMES ENABLED ON",
+    "type": "array",
+    "access": "readwrite",
+    "description": "A valid array must contain ints in the range between 1 and the max supported frame rate multiplier for the platform"
+  },
+  {
+    "path": "output/network/hidden-markers/mode",
+    "name": "HIDDEN MARKERS MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets current hidden markers mode",
+    "supported_values": [
+      "none",
+      "redspy",
+      "startracker",
+      "custom"
+    ]
+  },
+  {
+    "path": "output/network/hidden-markers/redspy/distance-to-tracker",
+    "name": "REDSPY DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for RedSpy markers in metres"
+  },
+  {
+    "path": "output/network/hidden-markers/redspy/marker-gain",
+    "name": "REDSPY MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the RedSpy markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/redspy/marker-seed",
+    "name": "REDSPY MARKER SEED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for RedSpy marker positions"
+  },
+  {
+    "path": "output/network/hidden-markers/redspy/marker-size-scaler",
+    "name": "REDSPY MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for RedSpy markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/blue/distance-to-tracker",
+    "name": "STARTRACKER BLUE DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for blue StarTracker markers in metres"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/blue/enabled",
+    "name": "STARTRACKER BLUE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables blue markers for StarTracker"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/blue/marker-gain",
+    "name": "STARTRACKER BLUE MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the blue StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/blue/marker-seed",
+    "name": "Page 43 of 77",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for blue StarTracker marker positions"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/blue/marker-size-scaler",
+    "name": "STARTRACKER BLUE MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for blue StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/green/distance-to-tracker",
+    "name": "STARTRACKER GREEN DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for green StarTracker markers in metres"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/green/enabled",
+    "name": "STARTRACKER GREEN ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables green markers for StarTracker"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/green/marker-gain",
+    "name": "STARTRACKER GREEN MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the green StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/green/marker-seed",
+    "name": "STARTRACKER GREEN MARKER SEED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for green StarTracker marker positions"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/green/marker-size-scaler",
+    "name": "STARTRACKER GREEN MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for green StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/red/distance-to-tracker",
+    "name": "STARTRACKER RED DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for red StarTracker markers in metres"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/red/enabled",
+    "name": "STARTRACKER RED ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables red markers for StarTracker"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/red/marker-gain",
+    "name": "STARTRACKER RED MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the red StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/red/marker-seed",
+    "name": "STARTRACKER RED MARKER SEED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for red StarTracker marker positions"
+  },
+  {
+    "path": "output/network/hidden-markers/startracker/red/marker-size-scaler",
+    "name": "STARTRACKER RED MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for red StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/shuttersync/angle-settings/custom-frame-rate",
+    "name": "SHUTTERSYNC CUSTOM FRAME RATE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "1 - 250",
+    "units": "Frames per Second",
+    "decimal_places": "3",
+    "description": "Gets or sets the value of the ShutterSync custom frame rate"
+  },
+  {
+    "path": "output/network/shuttersync/angle-settings/shutter-angle",
+    "name": "SHUTTERSYNC ANGLE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "1 - 360",
+    "units": "Degrees",
+    "decimal_places": "3",
+    "description": "Gets or sets the value of the shutter angle"
+  },
+  {
+    "path": "output/network/shuttersync/angle-settings/use-custom-frame-rate",
+    "name": "SHUTTERSYNC USE CUSTOM FRAME RATE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables ShutterSync Custom Frame Rate"
+  },
+  {
+    "path": "output/network/shuttersync/dark-time",
+    "name": "SHUTTERSYNC DARK TIME",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Milliseconds",
+    "decimal_places": "3",
+    "description": "Gets or sets the value of the ShutterSync dark time in milliseconds. Value stored independently of percentage value."
+  },
+  {
+    "path": "output/network/shuttersync/dark-time-mode",
+    "name": "SHUTTERSYNC DARK TIME MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the ShutterSync dark time mode. The processor can hold the dark time mode as a percentage and a time in milliseconds. This endpoint selects which value the processor uses.",
+    "supported_values": [
+      "time",
+      "percentage"
+    ]
+  },
+  {
+    "path": "output/network/shuttersync/dark-time-percentage",
+    "name": "SHUTTERSYNC DARK TIME PERCENTAGE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the ShutterSync dark time as a percentage of a frame. Value stored independently of milliseconds value."
+  },
+  {
+    "path": "output/network/shuttersync/insert-dark-time",
+    "name": "SHUTTERSYNC INSERT DARK TIME",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables insertion of dark time. Inserting dark time corresponds to displaying black frames in-between camera exposures."
+  },
+  {
+    "path": "output/network/shuttersync/mode",
+    "name": "SHUTTERSYNC MODE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets ShutterSync operation mode",
+    "supported_values": [
+      "none",
+      "speed",
+      "angle"
+    ]
+  },
+  {
+    "path": "output/network/shuttersync/prioritise-refresh-rate",
+    "name": "SHUTTERSYNC PRIORITISE REFRESH RATE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables ShutterSync prioritise refresh rate setting"
+  },
+  {
+    "path": "output/network/shuttersync/sensor-readout-time",
+    "name": "SHUTTERSYNC SENSOR READOUT TIME",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.00 - 42.00",
+    "units": "Milliseconds",
+    "decimal_places": "2",
+    "description": "Gets or sets sensor readout time"
+  },
+  {
+    "path": "output/network/shuttersync/sensor-type",
+    "name": "SHUTTERSYNC SENSOR TYPE",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets ShutterSync sensor type",
+    "supported_values": [
+      "any",
+      "global-shutter",
+      "rolling-shutter"
+    ]
+  },
+  {
+    "path": "output/network/shuttersync/speed-settings/shutter-speed",
+    "name": "SHUTTERSYNC SPEED",
+    "type": "float",
+    "access": "readwrite",
+    "range": "10 - 250",
+    "decimal_places": "3",
+    "description": "Gets or sets the denominator value of ShutterSync speed, numerator is 1"
+  },
+  {
+    "path": "output/network/shuttersync/speed-settings/time",
+    "name": "SHUTTERSYNC TIME",
+    "type": "float",
+    "access": "readwrite",
+    "range": "4 - 100",
+    "units": "Milliseconds",
+    "decimal_places": "3",
+    "description": "Gets or sets the time value of ShutterSync time"
+  },
+  {
+    "path": "output/network/shuttersync/viewer",
+    "name": "SHUTTERSYNC VIEWER",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the ShutterSync viewer mode",
+    "supported_values": [
+      "eye",
+      "camera"
+    ]
+  },
+  {
+    "path": "output/network/startracker/background-gain",
+    "name": "OLD STARTRACKER BACKGROUND GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets brightness of the video underneath StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/blackout-affects-markers",
+    "name": "OLD STARTRACKER BLACKOUT AFFECTS MARKERS",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Gets or sets whether blackout affects markers as well as video"
+  },
+  {
+    "path": "output/network/startracker/blue/distance-to-tracker",
+    "name": "OLD STARTRACKER BLUE DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for blue StarTracker markers in metres"
+  },
+  {
+    "path": "output/network/startracker/blue/enabled",
+    "name": "OLD STARTRACKER BLUE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables blue markers for StarTracker"
+  },
+  {
+    "path": "output/network/startracker/blue/marker-gain",
+    "name": "OLD STARTRACKER BLUE MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the blue StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/blue/marker-size-scaler",
+    "name": "OLD STARTRACKER BLUE MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for blue StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/blue/star-map-seed",
+    "name": "OLD STARTRACKER BLUE MARKER SEED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for blue StarTracker marker positions"
+  },
+  {
+    "path": "output/network/startracker/enabled",
+    "name": "OLD STARTRACKER ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables StarTracker markers"
+  },
+  {
+    "path": "output/network/startracker/frames-enabled-on",
+    "name": "OLD STARTRACKER FRAMES ENABLED ON",
+    "type": "array",
+    "access": "readwrite",
+    "description": "A valid array must contain ints in the range between 1 and the max supported frame rate multiplier for the platform"
+  },
+  {
+    "path": "output/network/startracker/green/distance-to-tracker",
+    "name": "OLD STARTRACKER GREEN DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for green StarTracker markers in metres"
+  },
+  {
+    "path": "output/network/startracker/green/enabled",
+    "name": "OLD STARTRACKER GREEN ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables green markers for StarTracker"
+  },
+  {
+    "path": "output/network/startracker/green/marker-gain",
+    "name": "OLD STARTRACKER GREEN MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the green StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/green/marker-size-scaler",
+    "name": "OLD STARTRACKER GREEN MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for green StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/green/star-map-seed",
+    "name": "OLD STARTRACKER GREEN MARKER SEED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for green StarTracker marker positions"
+  },
+  {
+    "path": "output/network/startracker/red/distance-to-tracker",
+    "name": "OLD STARTRACKER RED DISTANCE TO TRACKER",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.1 - 100.0",
+    "units": "Metres",
+    "decimal_places": "1",
+    "description": "Gets or sets distance to tracker for red StarTracker markers in metres"
+  },
+  {
+    "path": "output/network/startracker/red/enabled",
+    "name": "OLD STARTRACKER RED ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables red markers for StarTracker"
+  },
+  {
+    "path": "output/network/startracker/red/marker-gain",
+    "name": "OLD STARTRACKER RED MARKER GAIN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 100",
+    "units": "Percentage",
+    "description": "Gets or sets the current brightness of the red StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/red/marker-size-scaler",
+    "name": "OLD STARTRACKER RED MARKER SIZE SCALER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "10 - 200",
+    "units": "Percentage",
+    "description": "Gets or sets the size scaling for red StarTracker markers as a percentage"
+  },
+  {
+    "path": "output/network/startracker/red/star-map-seed",
+    "name": "OLD STARTRACKER RED MARKER SEED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 65535",
+    "description": "Gets or sets seed value for red StarTracker marker positions"
+  },
+  {
+    "path": "override/blackout/enabled",
+    "name": "BLACKOUT ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables blackout"
+  },
+  {
+    "path": "override/blackout/fade-time",
+    "name": "BLACKOUT FADE TIME",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 10.0",
+    "units": "Seconds",
+    "decimal_places": "1",
+    "description": "The value of the blackout fade time. The fade time may be adjusted between zero (snap) and 10 seconds"
+  },
+  {
+    "path": "override/freeze/enabled",
+    "name": "FREEZE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables video freeze"
+  },
+  {
+    "path": "override/test-pattern/custom-colour/blue",
+    "name": "TEST PATTERN CUSTOM COLOUR BLUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets the custom colour test pattern blue value"
+  },
+  {
+    "path": "override/test-pattern/custom-colour/green",
+    "name": "TEST PATTERN CUSTOM COLOUR GREEN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets the custom colour test pattern green value"
+  },
+  {
+    "path": "override/test-pattern/custom-colour/red",
+    "name": "TEST PATTERN CUSTOM COLOUR RED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets the custom colour test pattern red value"
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/end-colour/blue",
+    "name": "Page 50 of 77",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets blue component of custom gradient test pattern end colour as a 12 bit integer"
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/end-colour/green",
+    "name": "TEST PATTERN CUSTOM GRADIENT END GREEN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets green component of custom gradient test pattern end colour as a 12 bit integer"
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/end-colour/red",
+    "name": "TEST PATTERN CUSTOM GRADIENT END RED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets red component of custom gradient test pattern end colour as a 12 bit integer"
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/orientation",
+    "name": "TEST PATTERN CUSTOM GRADIENT ORIENTATION",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the custom gradient test pattern orientation",
+    "supported_values": [
+      "horizontal",
+      "vertical"
+    ]
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/start-colour/blue",
+    "name": "TEST PATTERN CUSTOM GRADIENT START GREEN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets green component of custom gradient test pattern start colour as a 12 bit integer"
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/start-colour/green",
+    "name": "TEST PATTERN CUSTOM GRADIENT START BLUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets blue component of custom gradient test pattern start colour as a 12 bit integer"
+  },
+  {
+    "path": "override/test-pattern/custom-gradient/start-colour/red",
+    "name": "TEST PATTERN CUSTOM GRADIENT START RED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 4095",
+    "description": "Gets or sets red component of custom gradient test pattern start colour as a 12 bit integer"
+  },
+  {
+    "path": "override/test-pattern/enabled",
+    "name": "TEST PATTERN ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables test pattern output function"
+  },
+  {
+    "path": "override/test-pattern/format",
+    "name": "Page 51 of 77",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Format of the generated test pattern",
+    "supported_values": [
+      "from-input",
+      "standard-dynamic-range",
+      "perceptual-quantiser",
+      "hybrid-log-gamma"
+    ]
+  },
+  {
+    "path": "override/test-pattern/frame-store/capture-frame",
+    "name": "CAPTURE FRAME",
+    "type": "int",
+    "access": "writeonly",
+    "range": "1 - 50",
+    "description": "Captures the current frame and saves it to the frame store with the user number provided. (Warning: Specifying a user number that already exists will overwrite the existing frame. This operation cannot be undone.)"
+  },
+  {
+    "path": "override/test-pattern/frame-store/delete-frame",
+    "name": "DELETE FRAME",
+    "type": "int",
+    "access": "writeonly",
+    "range": "1 - 50",
+    "description": "Delete the frame store frame at the user number provided."
+  },
+  {
+    "path": "override/test-pattern/frame-store/frames/{frame-user-number}/colour-space",
+    "name": "FRAME STORE COLOUR SPACE",
+    "type": "enum",
+    "access": "writeonly",
+    "description": "Set colour space for the frame",
+    "supported_values": [
+      "rec-2020",
+      "dci-p3",
+      "rec-709",
+      "aces-cg",
+      "custom"
+    ]
+  },
+  {
+    "path": "override/test-pattern/frame-store/frames/{frame-user-number}/enable-alpha",
+    "name": "FRAME STORE ALPHA ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Set alpha mode for the frame"
+  },
+  {
+    "path": "override/test-pattern/frame-store/frames/{frame-user-number}/format",
+    "name": "FRAME STORE FORMAT",
+    "type": "enum",
+    "access": "writeonly",
+    "description": "Set format for the frame",
+    "supported_values": [
+      "from-input",
+      "standard-dynamic-range",
+      "perceptual-quantiser",
+      "hybrid-log-gamma"
+    ]
+  },
+  {
+    "path": "override/test-pattern/frame-store/frames/{frame-user-number}/name",
+    "name": "FRAME NAME",
+    "type": "string",
+    "access": "readwrite",
+    "description": "Name of the Frame"
+  },
+  {
+    "path": "override/test-pattern/frame-store/frames/{frame-user-number}/scaling-mode",
+    "name": "FRAME STORE SCALING MODE",
+    "type": "enum",
+    "access": "writeonly",
+    "description": "Set scaling mode for the frame",
+    "supported_values": [
+      "1:1",
+      "stretch",
+      "fit",
+      "fill"
+    ]
+  },
+  {
+    "path": "override/test-pattern/restrict-to-achievable-colours",
+    "name": "Page 52 of 77",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables restrict to achievable colours switch"
+  },
+  {
+    "path": "override/test-pattern/type",
+    "name": "TEST PATTERN TYPE",
+    "type": "testpatterntype",
+    "access": "readwrite",
+    "range": "1 - 50",
+    "description": "Determines which test pattern or frame store image will be shown when the test pattern widget is activated. Accepts either a frame store user number, or test pattern title. Defaults to SMPTE bars.",
+    "supported_values": [
+      "brompton",
+      "red",
+      "green",
+      "blue",
+      "cyan",
+      "magenta",
+      "yellow",
+      "white",
+      "black",
+      "grid",
+      "scrolling-grid",
+      "checkerboard",
+      "scrolling-checkerboard",
+      "colour-bars",
+      "scrolling-colour-bars",
+      "gradient",
+      "scrolling-gradient",
+      "strobe",
+      "smpte-bars",
+      "scrolling-smpte-bars",
+      "custom-colour",
+      "custom",
+      "forty-five-degree-grid",
+      "scrolling-forty-five-degree-grid",
+      "custom-gradient",
+      "scrolling-custom-gradient"
+    ]
+  },
+  {
+    "path": "presets/active/name",
+    "name": "ACTIVE PRESET NAME",
+    "type": "string",
+    "access": "readonly",
+    "description": "Name of the currently active preset"
+  },
+  {
+    "path": "presets/active/number",
+    "name": "ACTIVE PRESET NUMBER",
+    "type": "int",
+    "access": "readwrite",
+    "range": "1 - 128",
+    "description": "Set to activate a preset"
+  },
+  {
+    "path": "presets/items/{number}/name",
+    "name": "PRESET NAME",
+    "type": "string",
+    "access": "readwrite",
+    "description": "Processor preset name"
+  },
+  {
+    "path": "presets/items/{number}/status",
+    "name": "PRESET STATUS",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Preset activation status"
+  },
+  {
+    "path": "processing/3d-lut/data",
+    "name": "3D LUT DATA",
+    "type": "bytearray",
+    "access": "readwrite",
+    "description": "Send bulk data in .cube file format to upload 3D LUT"
+  },
+  {
+    "path": "processing/3d-lut/enabled",
+    "name": "3D LUT ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables 3D LUT mapping"
+  },
+  {
+    "path": "processing/3d-lut/filename",
+    "name": "3D LUT FILENAME",
+    "type": "string",
+    "access": "readonly",
+    "description": "The name of the stored 3D LUT file"
+  },
+  {
+    "path": "processing/3d-lut/strength",
+    "name": "3D LUT STRENGTH",
+    "type": "float",
+    "access": "readwrite",
+    "range": "0.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Intensity/opacity of 3D LUT"
+  },
+  {
+    "path": "processing/colour-correct/black/blue",
+    "name": "14-WAY COLOUR CORRECT BLACK BLUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the black blue"
+  },
+  {
+    "path": "processing/colour-correct/black/green",
+    "name": "14-WAY COLOUR CORRECT BLACK GREEN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the black green"
+  },
+  {
+    "path": "processing/colour-correct/black/red",
+    "name": "14-WAY COLOUR CORRECT BLACK RED",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the black red"
+  },
+  {
+    "path": "processing/colour-correct/blue/brightness",
+    "name": "14-WAY COLOUR CORRECT BLUE BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the blue brightness"
+  },
+  {
+    "path": "processing/colour-correct/blue/hue",
+    "name": "14-WAY COLOUR CORRECT BLUE HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the blue hue"
+  },
+  {
+    "path": "processing/colour-correct/blue/saturation",
+    "name": "14-WAY COLOUR CORRECT BLUE SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the blue saturation"
+  },
+  {
+    "path": "processing/colour-correct/cobalt/brightness",
+    "name": "14-WAY COLOUR CORRECT COBALT BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the cobalt brightness"
+  },
+  {
+    "path": "processing/colour-correct/cobalt/hue",
+    "name": "14-WAY COLOUR CORRECT COBALT HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the cobalt hue"
+  },
+  {
+    "path": "processing/colour-correct/cobalt/saturation",
+    "name": "14-WAY COLOUR CORRECT COBALT SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the cobalt saturation"
+  },
+  {
+    "path": "processing/colour-correct/crimson/brightness",
+    "name": "14-WAY COLOUR CORRECT CRIMSON BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the crimson brightness"
+  },
+  {
+    "path": "processing/colour-correct/crimson/hue",
+    "name": "14-WAY COLOUR CORRECT CRIMSON HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the crimson hue"
+  },
+  {
+    "path": "processing/colour-correct/crimson/saturation",
+    "name": "14-WAY COLOUR CORRECT CRIMSON SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the crimson saturation"
+  },
+  {
+    "path": "processing/colour-correct/cyan/brightness",
+    "name": "14-WAY COLOUR CORRECT CYAN BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the cyan brightness"
+  },
+  {
+    "path": "processing/colour-correct/cyan/hue",
+    "name": "14-WAY COLOUR CORRECT CYAN HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the cyan hue"
+  },
+  {
+    "path": "processing/colour-correct/cyan/saturation",
+    "name": "14-WAY COLOUR CORRECT CYAN SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the cyan saturation"
+  },
+  {
+    "path": "processing/colour-correct/enabled",
+    "name": "14-WAY COLOUR CORRECT ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables the processor's 14-Way Colour Correct feature"
+  },
+  {
+    "path": "processing/colour-correct/green/brightness",
+    "name": "14-WAY COLOUR CORRECT GREEN BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the green brightness"
+  },
+  {
+    "path": "processing/colour-correct/green/hue",
+    "name": "14-WAY COLOUR CORRECT GREEN HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the green hue"
+  },
+  {
+    "path": "processing/colour-correct/green/saturation",
+    "name": "14-WAY COLOUR CORRECT GREEN SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the green saturation"
+  },
+  {
+    "path": "processing/colour-correct/lime/brightness",
+    "name": "14-WAY COLOUR CORRECT LIME BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the lime brightness"
+  },
+  {
+    "path": "processing/colour-correct/lime/hue",
+    "name": "14-WAY COLOUR CORRECT LIME HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the lime hue"
+  },
+  {
+    "path": "processing/colour-correct/lime/saturation",
+    "name": "14-WAY COLOUR CORRECT LIME SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the lime saturation"
+  },
+  {
+    "path": "processing/colour-correct/magenta/brightness",
+    "name": "14-WAY COLOUR CORRECT MAGENTA BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the magenta brightness"
+  },
+  {
+    "path": "processing/colour-correct/magenta/hue",
+    "name": "14-WAY COLOUR CORRECT MAGENTA HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the magenta hue"
+  },
+  {
+    "path": "processing/colour-correct/magenta/saturation",
+    "name": "14-WAY COLOUR CORRECT MAGENTA SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the magenta saturation"
+  },
+  {
+    "path": "processing/colour-correct/orange/brightness",
+    "name": "14-WAY COLOUR CORRECT ORANGE BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the orange brightness"
+  },
+  {
+    "path": "processing/colour-correct/orange/hue",
+    "name": "14-WAY COLOUR CORRECT ORANGE HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the orange hue"
+  },
+  {
+    "path": "processing/colour-correct/orange/saturation",
+    "name": "14-WAY COLOUR CORRECT ORANGE SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the orange saturation"
+  },
+  {
+    "path": "processing/colour-correct/red/brightness",
+    "name": "14-WAY COLOUR CORRECT RED BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the red brightness"
+  },
+  {
+    "path": "processing/colour-correct/red/hue",
+    "name": "14-WAY COLOUR CORRECT RED HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the red hue"
+  },
+  {
+    "path": "processing/colour-correct/red/saturation",
+    "name": "14-WAY COLOUR CORRECT RED SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the red saturation"
+  },
+  {
+    "path": "processing/colour-correct/turquoise/brightness",
+    "name": "14-WAY COLOUR CORRECT TURQUOISE BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the turquoise brightness"
+  },
+  {
+    "path": "processing/colour-correct/turquoise/hue",
+    "name": "14-WAY COLOUR CORRECT TURQUOISE HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the turquoise hue"
+  },
+  {
+    "path": "processing/colour-correct/turquoise/saturation",
+    "name": "14-WAY COLOUR CORRECT TURQUOISE SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the turquoise saturation"
+  },
+  {
+    "path": "processing/colour-correct/violet/brightness",
+    "name": "14-WAY COLOUR CORRECT VIOLET BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the violet brightness"
+  },
+  {
+    "path": "processing/colour-correct/violet/hue",
+    "name": "14-WAY COLOUR CORRECT VIOLET HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the violet hue"
+  },
+  {
+    "path": "processing/colour-correct/violet/saturation",
+    "name": "14-WAY COLOUR CORRECT VIOLET SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the violet saturation"
+  },
+  {
+    "path": "processing/colour-correct/white/blue",
+    "name": "14-WAY COLOUR CORRECT WHITE BLUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the white blue"
+  },
+  {
+    "path": "processing/colour-correct/white/green",
+    "name": "14-WAY COLOUR CORRECT WHITE GREEN",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the white green"
+  },
+  {
+    "path": "processing/colour-correct/white/red",
+    "name": "14-WAY COLOUR CORRECT WHITE RED",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the white red"
+  },
+  {
+    "path": "processing/colour-correct/yellow/brightness",
+    "name": "14-WAY COLOUR CORRECT YELLOW BRIGHTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the yellow brightness"
+  },
+  {
+    "path": "processing/colour-correct/yellow/hue",
+    "name": "14-WAY COLOUR CORRECT YELLOW HUE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-180.0 - 180.0",
+    "units": "Degrees",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the yellow hue"
+  },
+  {
+    "path": "processing/colour-correct/yellow/saturation",
+    "name": "14-WAY COLOUR CORRECT YELLOW SATURATION",
+    "type": "float",
+    "access": "readwrite",
+    "range": "-100.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the yellow saturation"
+  },
+  {
+    "path": "processing/colour-replace/apply-to-brightness",
+    "name": "COLOUR REPLACE APPLY TO BRIGHTNESS",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables apply to brightness switch for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/apply-to-hue",
+    "name": "COLOUR REPLACE APPLY TO HUE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables apply to hue switch for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/apply-to-saturation",
+    "name": "COLOUR REPLACE APPLY TO SATURATION",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables apply to saturation switch for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/brightness-tolerance",
+    "name": "COLOUR REPLACE BRIGHTNESS TOLERANCE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "10.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the brightness tolerance for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/colour-from/blue",
+    "name": "COLOUR REPLACE FROM BLUE",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets the blue component of the colour replace source colour"
+  },
+  {
+    "path": "processing/colour-replace/colour-from/green",
+    "name": "COLOUR REPLACE FROM GREEN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets the green component of the colour replace source colour"
+  },
+  {
+    "path": "processing/colour-replace/colour-from/red",
+    "name": "COLOUR REPLACE FROM RED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets the red component of the colour replace source colour"
+  },
+  {
+    "path": "processing/colour-replace/colour-to/blue",
+    "name": "Page 61 of 77",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets the blue component of the colour replace target colour"
+  },
+  {
+    "path": "processing/colour-replace/colour-to/green",
+    "name": "COLOUR REPLACE TO GREEN",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets the green component of the colour replace target colour"
+  },
+  {
+    "path": "processing/colour-replace/colour-to/red",
+    "name": "COLOUR REPLACE TO RED",
+    "type": "int",
+    "access": "readwrite",
+    "range": "0 - 255",
+    "description": "Gets or sets the red component of the colour replace target colour"
+  },
+  {
+    "path": "processing/colour-replace/colour-tolerance",
+    "name": "COLOUR REPLACE COLOUR TOLERANCE",
+    "type": "float",
+    "access": "readwrite",
+    "range": "10.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the colour tolerance for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/enabled",
+    "name": "COLOUR REPLACE ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables the processor's Colour Replace feature"
+  },
+  {
+    "path": "processing/colour-replace/method",
+    "name": "COLOUR REPLACE METHOD",
+    "type": "enum",
+    "access": "readwrite",
+    "description": "Gets or sets the method applied by the processor for colour replacement",
+    "supported_values": [
+      "set-to-colour",
+      "transform-to-colour"
+    ]
+  },
+  {
+    "path": "processing/colour-replace/softness",
+    "name": "COLOUR REPLACE SOFTNESS",
+    "type": "float",
+    "access": "readwrite",
+    "range": "6.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the softness for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/strength",
+    "name": "COLOUR REPLACE STRENGTH",
+    "type": "float",
+    "access": "readwrite",
+    "range": "6.0 - 100.0",
+    "units": "Percentage",
+    "decimal_places": "1",
+    "description": "Gets or sets the value of the strength for colour replace"
+  },
+  {
+    "path": "processing/colour-replace/view-matte",
+    "name": "COLOUR REPLACE VIEW MATTE",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables view matte for colour replace"
+  },
+  {
+    "path": "processing/curves/blue/points",
+    "name": "CURVES BLUE POINTS",
+    "type": "array",
+    "access": "readwrite",
+    "description": "A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625"
+  },
+  {
+    "path": "processing/curves/enabled",
+    "name": "CURVES ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables the processor's Colour Curves feature"
+  },
+  {
+    "path": "processing/curves/green/points",
+    "name": "CURVES GREEN POINTS",
+    "type": "array",
+    "access": "readwrite",
+    "description": "A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625"
+  },
+  {
+    "path": "processing/curves/red/points",
+    "name": "CURVES RED POINTS",
+    "type": "array",
+    "access": "readwrite",
+    "description": "A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625"
+  },
+  {
+    "path": "processing/curves/white/points",
+    "name": "CURVES WHITE POINTS",
+    "type": "array",
+    "access": "readwrite",
+    "description": "A valid array must contain JSON objects with x and y values specified in the range [0,1] e.g. [{x:0.2, y:0.2}, {x:0.64, y:0.77}], or send an empty array to clear all points. Minimum separation between points is 0.0625"
+  },
+  {
+    "path": "processing/osca/module-correction-enabled",
+    "name": "OSCA MODULE CORRECTION ENABLED",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables OSCA module correction"
+  },
+  {
+    "path": "processing/osca/seam-correction-enabled",
+    "name": "Page 63 of 77",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables OSCA seam correction"
+  },
+  {
+    "path": "processing/scaler/enabled",
+    "name": "SCALER",
+    "type": "bool",
+    "access": "readwrite",
+    "description": "Enables or disables scaler"
+  },
+  {
+    "path": "project/name",
+    "name": "PROJECT NAME",
+    "type": "string",
+    "access": "readonly",
+    "description": "Gets the name of the Project"
+  },
+  {
+    "path": "system/actions/reboot",
+    "name": "SYSTEM REBOOT",
+    "type": "string",
+    "access": "writeonly",
+    "description": "If the processor password is set then this must be sent in the body. Otherwise send a blank string to trigger the reboot."
+  },
+  {
+    "path": "system/actions/shutdown",
+    "name": "SYSTEM SHUTDOWN",
+    "type": "string",
+    "access": "writeonly",
+    "description": "If the processor password is set then this must be sent in the body. Otherwise send a blank string to trigger the shutdown."
+  },
+  {
+    "path": "system/current-date-time",
+    "name": "CURRENT DATE AND TIME",
+    "type": "string",
+    "access": "readonly",
+    "description": "Current date/time of processor in yyyy-MM-dd hh:mm:ss 24 hour format"
+  },
+  {
+    "path": "system/fan/case/one/speed",
+    "name": "CASE FAN 1 SPEED",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 5000",
+    "units": "RPM",
+    "description": "Current speed of the Case Fan"
+  },
+  {
+    "path": "system/fan/case/one/status",
+    "name": "CASE FAN 1 STATUS",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Current activation status of Case Fan 1"
+  },
+  {
+    "path": "system/fan/case/two/speed",
+    "name": "CASE FAN 2 SPEED",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 5000",
+    "units": "RPM",
+    "description": "Current speed of Case Fan 2"
+  },
+  {
+    "path": "system/fan/case/two/status",
+    "name": "CASE FAN 2 STATUS",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Current activation status of Case Fan 2"
+  },
+  {
+    "path": "system/fan/fpga/speed",
+    "name": "FPGA FAN SPEED",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 5000",
+    "units": "RPM",
+    "description": "Current speed of the FPGA Fan. Supported only on SX40, S8."
+  },
+  {
+    "path": "system/fan/fpga/status",
+    "name": "FPGA FAN STATUS",
+    "type": "bool",
+    "access": "readonly",
+    "description": "Current activation status of the FPGA Fan. Supported only on SX40, S8."
+  },
+  {
+    "path": "system/processor-name",
+    "name": "PROCESSOR NAME",
+    "type": "string",
+    "access": "readonly",
+    "description": "The name of the processor"
+  },
+  {
+    "path": "system/processor-type",
+    "name": "PROCESSOR TYPE",
+    "type": "enum",
+    "access": "readonly",
+    "description": "Processor hardware model",
+    "supported_values": [
+      "m2",
+      "s4",
+      "s8",
+      "t1",
+      "t8",
+      "sx40"
+    ]
+  },
+  {
+    "path": "system/serial-number",
+    "name": "SERIAL NUMBER",
+    "type": "string",
+    "access": "readonly",
+    "description": "Gets the Serial Number of the processor"
+  },
+  {
+    "path": "system/software-version",
+    "name": "SOFTWARE VERSION",
+    "type": "string",
+    "access": "readonly",
+    "description": "Current version of software in format x.y.z \u00a9 2012-2025 Brompton Technology Ltd. | API & IP Control | June 2025 Page 65 of 77"
+  },
+  {
+    "path": "system/temperature/ambient",
+    "name": "AMBIENT TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Ambient Temperature. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/cpu",
+    "name": "CPU TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current temperature of the main CPU core. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/dsp",
+    "name": "DSP TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of the DSP. Supported by M2, T1, S4."
+  },
+  {
+    "path": "system/temperature/ethernet/copper/a",
+    "name": "ETHERNET COPPER PHY A TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of Ethernet Copper Physical Interface A. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/ethernet/copper/b",
+    "name": "ETHERNET COPPER PHY B TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of Ethernet Copper Physical Interface B. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/ethernet/sfp/a",
+    "name": "ETHERNET SFP A TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of Ethernet SFP A. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/ethernet/sfp/b",
+    "name": "ETHERNET SFP B TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of Ethernet SFP B. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/ethernet/sfp/c",
+    "name": "ETHERNET SFP C TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of Ethernet SFP C. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/ethernet/sfp/d",
+    "name": "ETHERNET SFP D TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of Ethernet SFP D. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/fpga",
+    "name": "FPGA TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current temperature of the FPGA core. Supported by SX40, S8, M2."
+  },
+  {
+    "path": "system/temperature/front",
+    "name": "FRONT TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of the Front Panel. Supported by M2."
+  },
+  {
+    "path": "system/temperature/gpu",
+    "name": "GPU TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of the GPU. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/main",
+    "name": "MAIN BOARD TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of the Main Board. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/psu",
+    "name": "PSU TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of the PSU. Supported by SX40, S8."
+  },
+  {
+    "path": "system/temperature/rear",
+    "name": "REAR TEMPERATURE",
+    "type": "float",
+    "access": "readonly",
+    "range": "0 - 200",
+    "units": "Celsius",
+    "description": "Current Temperature of the Rear Panel. Supported by M2."
+  },
+  {
+    "path": "system/uptime",
+    "name": "UPTIME",
+    "type": "string",
+    "access": "readonly",
+    "range": "0 - 10)\"",
+    "description": "Time since processor boot in DDd HHh MMm SSs format"
+  }
+]
