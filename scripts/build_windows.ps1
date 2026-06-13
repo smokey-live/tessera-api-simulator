@@ -13,7 +13,7 @@ function Invoke-Checked {
     param(
         [Parameter(Mandatory = $true)]
         [string] $Command,
-        [Parameter(ValueFromRemainingArguments = $true)]
+        [Parameter(Mandatory = $true)]
         [string[]] $Arguments
     )
 
@@ -65,16 +65,16 @@ if (!(Test-Path $Python)) {
         $Arguments += $SystemPython[1..($SystemPython.Length - 1)]
     }
     $Arguments += @("-m", "venv", $VenvDir)
-    Invoke-Checked $Command @Arguments
+    Invoke-Checked -Command $Command -Arguments $Arguments
 }
 
 Assert-OutputNotLocked
 
-Invoke-Checked $Python -m pip install --upgrade pip
-Invoke-Checked $Python -m pip install -r (Join-Path $WindowsDir "requirements-windows.txt")
+Invoke-Checked -Command $Python -Arguments @("-m", "pip", "install", "--upgrade", "pip")
+Invoke-Checked -Command $Python -Arguments @("-m", "pip", "install", "-r", (Join-Path $WindowsDir "requirements-windows.txt"))
 
-Invoke-Checked $Python -c "from PIL import Image; img=Image.open(r'$IconPng'); img.save(r'$IconIco', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
-Invoke-Checked $Python -m PyInstaller --clean --noconfirm (Join-Path $WindowsDir "TesseraMonitoringAndControl.spec")
+Invoke-Checked -Command $Python -Arguments @("-c", "from PIL import Image; img=Image.open(r'$IconPng'); img.save(r'$IconIco', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])")
+Invoke-Checked -Command $Python -Arguments @("-m", "PyInstaller", "--clean", "--noconfirm", (Join-Path $WindowsDir "TesseraMonitoringAndControl.spec"))
 
 Write-Host ""
 Write-Host "Built Windows executable:"
