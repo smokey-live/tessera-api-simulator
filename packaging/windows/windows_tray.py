@@ -40,6 +40,7 @@ def data_dir() -> Path:
 
 def configure_environment() -> None:
     os.environ.setdefault("TESSERA_SIM_BASE", str(data_dir()))
+    os.environ.setdefault("TESSERA_APP_DIR", str(app_dir()))
     os.environ.setdefault("PORT", str(HTTP_PORT))
     os.environ.setdefault("TESSERA_TCP_PORT", str(TCP_PORT))
     os.environ.setdefault("TESSERA_SYSLOG_PORT", str(SYSLOG_PORT))

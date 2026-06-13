@@ -10,7 +10,7 @@ from log_store import clear_all_logs, clear_logs, export_logs_csv, list_logs, li
 from topology_monitor import add_monitor, get_cards_wide, list_monitors, poll_due_monitors, remove_monitor, reorder_monitors, set_cards_wide, topology_svg
 
 BASE = Path(os.environ.get('TESSERA_SIM_BASE','/var/lib/tessera-sim'))
-APPDIR = Path(__file__).resolve().parent
+APPDIR = Path(os.environ.get('TESSERA_APP_DIR', Path(__file__).resolve().parent))
 STATE_FILE = BASE/'state.json'
 FILES_DIR = BASE/'files'
 PRESETS_DIR = BASE/'presets'
