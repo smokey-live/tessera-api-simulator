@@ -1,4 +1,4 @@
-# Tessera API Simulator
+# Tessera Control and Monitoring
 
 A local Brompton Tessera-style API simulator for developing and testing control clients without needing a physical processor on hand.
 
@@ -8,6 +8,8 @@ This project was built around the Tessera IP Control API 3.5.2 behavior and a re
 
 - HTTP API rooted at `/api`
 - Telnet-style TCP command service
+- Home page at `/` for choosing the current tool
+- API contents browser at `/api-contents`
 - Persistent writable API state
 - Endpoint validation for known datatypes, ranges and access rules
 - Read-only enforcement for normal API clients
@@ -35,8 +37,8 @@ cd tessera-api-simulator
 
 Default ports:
 
-- HTTP API and God Mode: `80`
-- TCP command socket: `3000`
+- HTTP API, Home and God Mode: `80`
+- TCP command socket: `23`
 
 Override ports during install:
 
@@ -57,17 +59,34 @@ This backs up the current app files under `/opt/tessera-sim/backups/` and restar
 
 ## Test
 
+Run locally with an isolated runtime directory:
+
 ```bash
-curl http://YOUR_LXC_IP/api
-curl http://YOUR_LXC_IP/api/system/processor-type
-curl http://YOUR_LXC_IP/api/system/current-date-time
-curl http://YOUR_LXC_IP/api/system/temperature/cpu
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+TESSERA_SIM_BASE=.runtime PORT=8080 python app/tessera_sim.py
+```
+
+Then in another shell:
+
+```bash
+curl http://127.0.0.1:8080/api
+curl http://127.0.0.1:8080/api/system/processor-type
+curl http://127.0.0.1:8080/api/system/current-date-time
+curl http://127.0.0.1:8080/api/system/temperature/cpu
+```
+
+Open the home page:
+
+```text
+http://127.0.0.1:8080/
 ```
 
 Write a value through the normal API:
 
 ```bash
-curl -X PUT http://YOUR_LXC_IP/api/output/global-colour/brightness \
+curl -X PUT http://127.0.0.1:8080/api/output/global-colour/brightness \
   -H 'Content-Type: application/json' \
   -d '{"data":5000}'
 ```
@@ -75,7 +94,13 @@ curl -X PUT http://YOUR_LXC_IP/api/output/global-colour/brightness \
 Open God Mode:
 
 ```text
-http://YOUR_LXC_IP/god
+http://127.0.0.1:8080/god
+```
+
+Run the smoke tests:
+
+```bash
+python -m unittest discover -s tests
 ```
 
 ## Preset behavior

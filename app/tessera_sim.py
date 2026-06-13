@@ -15,7 +15,9 @@ PRESETS_DIR = BASE/'presets'
 LIVE_FILE = BASE/'live_read.json'
 START = time.time()
 
-app = FastAPI(title='Tessera Processor API Simulator', version='3.5.2')
+APP_NAME = 'Tessera Control and Monitoring'
+
+app = FastAPI(title=APP_NAME, version='3.5.2')
 
 def load_json(p):
     with open(p,'r',encoding='utf-8') as f: return json.load(f)
@@ -281,10 +283,70 @@ async def api_route(path: str='', request: Request=None):
 
 @app.get('/')
 async def root():
-    return {'tessera-simulator':'ok','api':'/api/'}
+    return HTMLResponse(f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>{APP_NAME}</title>
+<style>
+body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:32px}}
+main{{max-width:920px;margin:0 auto}} h1{{margin:0 0 6px;font-size:34px}} .sub{{color:#aaa;margin-bottom:28px}}
+.actions{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}}
+.action{{display:block;background:#181818;border:1px solid #333;border-radius:8px;padding:18px;text-decoration:none;color:#eee}}
+.action:hover{{border-color:#5797d6;background:#1d1d1d}} .action b{{display:block;font-size:19px;margin-bottom:8px;color:#fff}}
+.action span{{display:block;color:#aaa;line-height:1.45}} .meta{{margin-top:28px;color:#888;font-size:13px}}
+a{{color:#8cc7ff}}
+</style></head>
+<body><main>
+<h1>{APP_NAME}</h1>
+<div class="sub">Local tools for working with Brompton Tessera processor API data.</div>
+<div class="actions">
+  <a class="action" href="/api-contents"><b>View API Contents</b><span>Browse the simulator's current API state as a searchable table.</span></a>
+  <a class="action" href="/god"><b>God Mode</b><span>Edit API endpoints directly to simulate different processor states.</span></a>
+</div>
+<div class="meta">Raw API data is still available at <a href="/api/">/api/</a>.</div>
+</main></body></html>""")
+
+@app.get('/api-contents', response_class=HTMLResponse)
+async def api_contents(q: str = ''):
+    state = read_state(); apply_live_values(state)
+    api = state.get('api', state)
+    ql = (q or '').lower().strip()
+    rows = []
+    for path, value in flatten_values(api):
+        val_text = json.dumps(value) if isinstance(value, (dict, list, bool, int, float)) else str(value)
+        if ql and ql not in path.lower() and ql not in val_text.lower():
+            continue
+        e = metadata(path) or {}
+        access_label = {'rw':'R/W','ro':'R/O','wo':'W/O'}.get(access(e), e.get('access',''))
+        rows.append(f"""
+        <tr>
+          <td class="path"><code>/api/{html_escape(path)}</code></td>
+          <td>{html_escape(e.get('type',''))}</td>
+          <td>{html_escape(access_label)}</td>
+          <td>{html_escape(e.get('range','') or '')}</td>
+          <td><code>{html_escape(val_text)}</code></td>
+        </tr>""")
+    html = f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>API Contents - {APP_NAME}</title>
+<style>
+body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
+h1{{margin:0 0 4px}} .sub{{color:#aaa;margin-bottom:18px}} a{{color:#8cc7ff}} code{{color:#b8e1ff}}
+.top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}}
+.search{{display:flex;gap:8px;margin:18px 0}} input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}}
+.search input{{width:420px;max-width:60vw}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:7px 12px;cursor:pointer}}
+table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
+th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{background:#191919}}
+.path{{width:34%}} td:last-child code{{white-space:pre-wrap;word-break:break-word}}
+</style></head>
+<body>
+<div class="top"><div><h1>API Contents</h1><div class="sub">{len(rows)} current endpoint values shown.</div></div><div><a href="/">Home</a> · <a href="/god">God Mode</a> · <a href="/api/">Raw JSON</a></div></div>
+<form class="search" method="get" action="/api-contents"><input name="q" value="{html_escape(q)}" placeholder="Filter by path or current value"><button>Filter</button><a href="/api-contents">Clear</a></form>
+<table><thead><tr><th>Path</th><th>Type</th><th>Access</th><th>Range</th><th>Current Value</th></tr></thead><tbody>
+{''.join(rows)}
+</tbody></table>
+</body></html>"""
+    return HTMLResponse(html)
 
 async def handle_tcp(reader, writer):
-    writer.write(b'Tessera API Simulator ready. Commands: get/set/list/help <path> [value]\n'); await writer.drain()
+    writer.write(b'Tessera Control and Monitoring ready. Commands: get/set/list/help <path> [value]\n'); await writer.drain()
     state=read_state()
     while True:
         line=await reader.readline()
@@ -590,7 +652,7 @@ async def god_page(q: str = '', msg: str = '', level: str = 'info'):
         </tr>""")
     flash = f"<div class='flash {html_escape(level)}'>{html_escape(msg)}</div>" if msg else ''
     html = f"""<!doctype html>
-<html><head><meta charset="utf-8"><title>Tessera Simulator God Mode</title>
+<html><head><meta charset="utf-8"><title>{APP_NAME} God Mode</title>
 <style>
 body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
 h1{{margin:0 0 4px}} .sub{{color:#aaa;margin-bottom:18px}}
@@ -605,13 +667,13 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
 .panelgrid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:16px 0}} .panel,.preset-card{{background:#181818;border:1px solid #333;border-radius:8px;padding:12px}} .panel h2{{font-size:16px;margin:0 0 8px}} textarea{{display:block;width:95%;min-height:58px;background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px;margin:8px 0}} .panel input{{display:block;width:95%;margin:8px 0}} .presets{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:18px}} .preset-card form{{display:inline-block;margin:8px 6px 0 0}} .danger{{background:#a43b3b}}
 </style></head>
 <body>
-<h1>Tessera Simulator God Mode</h1>
+<h1>{APP_NAME} God Mode</h1>
 <div class="sub">Edit simulator state directly. API read-only rules are bypassed here for testing clients.</div>
 <div class="notice">Still locked in God Mode: <code>/api/system/current-date-time</code>, <code>/api/system/uptime</code>, and everything under <code>/api/system/temperature/</code>. Live Read Real Processor intentionally overwrites those values while live read is active.</div>
 {flash}
 {preset_panel_html()}
 <form class="search" method="get" action="/god"><input name="q" value="{html_escape(q)}" placeholder="Filter by path or current value"><button>Filter</button><a href="/god">Clear</a></form>
-<div class="sub">API root: <a href="/api/">/api/</a> · JSON dump: <a href="/god/state">/god/state</a></div>
+<div class="sub"><a href="/">Home</a> · <a href="/api-contents">View API Contents</a> · API root: <a href="/api/">/api/</a> · JSON dump: <a href="/god/state">/god/state</a></div>
 <table><thead><tr><th>Path</th><th>Type</th><th>API Access</th><th>Range</th><th>Value</th></tr></thead><tbody>
 {''.join(rows)}
 </tbody></table>
