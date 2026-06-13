@@ -150,7 +150,7 @@ def list_processors():
         rows = conn.execute("""
             SELECT p.ip, COALESCE(p.name, p.ip) AS name, p.last_seen_epoch, COUNT(l.id) AS log_count
             FROM processors p
-            LEFT JOIN processor_logs l ON l.processor_ip = p.ip
+            JOIN processor_logs l ON l.processor_ip = p.ip
             GROUP BY p.ip
             ORDER BY LOWER(name), p.ip
         """).fetchall()
@@ -182,6 +182,7 @@ def clear_logs(processor_ip: str):
     init_log_db()
     with connect() as conn:
         conn.execute("DELETE FROM processor_logs WHERE processor_ip = ?", (processor_ip,))
+        conn.execute("DELETE FROM processors WHERE ip = ? AND NOT EXISTS (SELECT 1 FROM processor_logs WHERE processor_ip = ?)", (processor_ip, processor_ip))
 
 
 def export_logs_csv(minutes_back: int, processor_ip: str = '') -> str:
