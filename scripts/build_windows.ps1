@@ -7,6 +7,34 @@ $IconPng = Join-Path $AssetsDir "sl-icon.png"
 $IconIco = Join-Path $AssetsDir "sl-icon.ico"
 $VenvDir = Join-Path $Root ".venv-windows"
 $Python = Join-Path $VenvDir "Scripts\python.exe"
+$OutputExe = Join-Path $Root "dist\TesseraMonitoringAndControl.exe"
+
+function Invoke-Checked {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Command,
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]] $Arguments
+    )
+
+    & $Command @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed with exit code ${LASTEXITCODE}: $Command $($Arguments -join ' ')"
+    }
+}
+
+function Assert-OutputNotLocked {
+    if (!(Test-Path $OutputExe)) {
+        return
+    }
+
+    try {
+        $Stream = [System.IO.File]::Open($OutputExe, "Open", "ReadWrite", "None")
+        $Stream.Close()
+    } catch {
+        throw "Cannot overwrite $OutputExe. Quit Tessera Monitoring and Control from the system tray, or stop any running TesseraMonitoringAndControl.exe processes, then run this script again."
+    }
+}
 
 function Get-SystemPython {
     $Candidates = @(
@@ -37,17 +65,19 @@ if (!(Test-Path $Python)) {
         $Arguments += $SystemPython[1..($SystemPython.Length - 1)]
     }
     $Arguments += @("-m", "venv", $VenvDir)
-    & $Command @Arguments
+    Invoke-Checked $Command @Arguments
 }
 
-& $Python -m pip install --upgrade pip
-& $Python -m pip install -r (Join-Path $WindowsDir "requirements-windows.txt")
+Assert-OutputNotLocked
 
-& $Python -c "from PIL import Image; img=Image.open(r'$IconPng'); img.save(r'$IconIco', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
-& $Python -m PyInstaller --clean --noconfirm (Join-Path $WindowsDir "TesseraMonitoringAndControl.spec")
+Invoke-Checked $Python -m pip install --upgrade pip
+Invoke-Checked $Python -m pip install -r (Join-Path $WindowsDir "requirements-windows.txt")
+
+Invoke-Checked $Python -c "from PIL import Image; img=Image.open(r'$IconPng'); img.save(r'$IconIco', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+Invoke-Checked $Python -m PyInstaller --clean --noconfirm (Join-Path $WindowsDir "TesseraMonitoringAndControl.spec")
 
 Write-Host ""
 Write-Host "Built Windows executable:"
-Write-Host (Join-Path $Root "dist\TesseraMonitoringAndControl.exe")
+Write-Host $OutputExe
 Write-Host ""
 Write-Host "Run as Administrator if Windows blocks binding to TCP 23 or UDP 514."
