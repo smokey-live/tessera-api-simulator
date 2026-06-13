@@ -510,10 +510,10 @@ h1{{margin:0 0 4px}} h2{{margin:0 0 4px;font-size:18px}} .sub{{color:#aaa}} a{{c
 .controls{{display:flex;justify-content:space-between;gap:16px;align-items:end;flex-wrap:wrap}} .add,.layout{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} .layout{{margin-left:auto;justify-content:flex-end}}
 label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}} select,input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
 .monitor-title{{font-size:clamp(17px,1.35vw,26px);font-weight:800;text-align:center;line-height:1.05;margin:2px 0 4px;overflow-wrap:anywhere}} .monitor-ip{{font-size:clamp(13px,1vw,18px);text-align:center;margin-bottom:8px;color:#eee}}
-.topology-graphic{{background:#000;border:6px solid #050505;margin:0 0 8px}} .monitor-meta,.monitor-footer{{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-size:clamp(13px,1vw,18px)}} .last-polled{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}} .monitor-footer{{margin-top:8px}}
+.topology-graphic{{background:transparent;border:0;margin:0 0 8px}} .monitor-meta,.monitor-footer{{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-size:clamp(13px,1vw,18px)}} .last-polled{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}} .monitor-footer{{margin-top:8px}}
 .monitor-actions{{display:flex;gap:8px;align-items:center}} .drag-handle{{color:#aaa;border:1px solid #444;border-radius:5px;padding:7px 9px;cursor:grab;user-select:none;font-size:14px}} .dragging{{opacity:.45}} .drag-over{{border-color:#5797d6}}
 .danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}} .flash.error{{background:#2b1111;border-color:#933;color:#ffd0d0}}
-.topology-svg{{display:block;width:100%;margin:0 auto;background:#000}}
+.topology-svg{{display:block;width:100%;margin:0 auto;background:transparent}}
 .topology-svg text{{fill:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:20px}} .topology-svg .title{{font-size:22px}}
 .topology-svg .frame,.topology-svg .port-row{{fill:none;stroke:#fff;stroke-width:1.5}} .topology-svg .port-row{{stroke-width:1}}
 .topology-svg .arrow{{stroke-width:2.2;fill:none}} .topology-svg .arrow.ok{{stroke:#00ff30}} .topology-svg .arrow.bad{{stroke:#ff2828}}
@@ -974,6 +974,7 @@ body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;co
 h1{{margin:0 0 4px}} .sub{{color:#aaa;margin-bottom:18px}}
 a{{color:#8cc7ff}} code{{color:#b8e1ff}}
 {NAV_CSS}
+.top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
 .search{{display:flex;gap:8px;margin:18px 0}} input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}}
 .search input{{width:420px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:7px 12px;cursor:pointer}}
 table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
@@ -984,13 +985,12 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
 .panelgrid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin:16px 0}} .panel,.preset-card{{background:#181818;border:1px solid #333;border-radius:8px;padding:12px}} .panel h2{{font-size:16px;margin:0 0 8px}} textarea{{display:block;width:95%;min-height:58px;background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px;margin:8px 0}} .panel input{{display:block;width:95%;margin:8px 0}} .presets{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:18px}} .preset-card form{{display:inline-block;margin:8px 6px 0 0}} .danger{{background:#a43b3b}}
 </style></head>
 <body>
-<h1>{APP_NAME} God Mode</h1>
-<div class="sub">Edit simulator state directly. API read-only rules are bypassed here for testing clients.</div>
+<div class="top"><div><h1>{APP_NAME} God Mode</h1><div class="sub">Edit simulator state directly. API read-only rules are bypassed here for testing clients.</div></div>{page_nav('God Mode')}</div>
 <div class="notice">Still locked in God Mode: <code>/api/system/current-date-time</code>, <code>/api/system/uptime</code>, and everything under <code>/api/system/temperature/</code>. Live Read Real Processor intentionally overwrites those values while live read is active.</div>
 {flash}
 {preset_panel_html()}
 <form class="search" method="get" action="/god"><input name="q" value="{html_escape(q)}" placeholder="Filter by path or current value"><button>Filter</button><a href="/god">Clear</a></form>
-<div class="sub">{page_nav('God Mode')} · API root: <a href="/api/">/api/</a> · JSON dump: <a href="/god/state">/god/state</a></div>
+<div class="sub">API root: <a href="/api/">/api/</a> · JSON dump: <a href="/god/state">/god/state</a></div>
 <table><thead><tr><th>Path</th><th>Type</th><th>API Access</th><th>Range</th><th>Value</th></tr></thead><tbody>
 {''.join(rows)}
 </tbody></table>
