@@ -12,6 +12,7 @@ sys.path.insert(0, str(APP_DIR))
 
 from fastapi.testclient import TestClient  # noqa: E402
 import tessera_sim  # noqa: E402
+import topology_monitor  # noqa: E402
 
 
 class TesseraSimulatorSmokeTests(unittest.TestCase):
@@ -55,6 +56,28 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Topology Monitoring", response.text)
         self.assertIn("No processors are being monitored yet.", response.text)
+
+    def test_topology_no_connection_pair_draws_red_x(self):
+        loop_state = (
+            "no-loop-found: A1->No connection, "
+            "loop-found: A2->B2, "
+            "no-loop-found: B1->No connection"
+        )
+        parsed = topology_monitor.parse_loop_state(loop_state)
+        self.assertEqual(parsed[0]["end"], "NO CONNECTION")
+
+        svg = topology_monitor.topology_svg({
+            "id": "test",
+            "name": "Test",
+            "ip": "192.0.2.10",
+            "processor_type": "sx40",
+            "loop1_state": loop_state,
+            "loop2_state": "",
+        })
+
+        self.assertEqual(svg.count('class="error-x"'), 1)
+        self.assertEqual(svg.count('class="arrow bad"'), 2)
+        self.assertEqual(svg.count('marker-start="url(#arrow-bad-test)"'), 2)
 
     def test_api_root_returns_default_tree(self):
         response = self.client.get("/api")

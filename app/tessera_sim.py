@@ -517,7 +517,7 @@ label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}} select,input{
 .topology-svg text{{fill:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:20px}} .topology-svg .title{{font-size:22px}}
 .topology-svg .frame,.topology-svg .port-row{{fill:none;stroke:#fff;stroke-width:1.5}} .topology-svg .port-row{{stroke-width:1}}
 .topology-svg .arrow{{stroke-width:2.2;fill:none}} .topology-svg .arrow.ok{{stroke:#00ff30}} .topology-svg .arrow.bad{{stroke:#ff2828}}
-.topology-svg .unsupported{{fill:#ffcc66;font-size:16px}}
+.topology-svg .unsupported{{fill:#ffcc66;font-size:16px}} .topology-svg .error-x{{fill:#ff2828;font-size:28px;font-weight:800}}
 @media (max-width: 1100px){{.monitor-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}} @media (max-width: 680px){{.monitor-grid{{grid-template-columns:1fr}}}}
 </style></head>
 <script>

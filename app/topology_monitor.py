@@ -217,12 +217,13 @@ def parse_loop_state(raw: Any):
     if not text or text.lower() in ('null', 'none'):
         return []
     entries = []
-    pattern = re.compile(r'(loop-found|no-loop-found|incorrect-loop-found|one-to-many-error)\s*:\s*([A-D]\d{1,2})(?:\s*->\s*([A-D]\d{1,2}))?', re.I)
+    pattern = re.compile(r'(loop-found|no-loop-found|incorrect-loop-found|one-to-many-error)\s*:\s*([A-D]\d{1,2})(?:\s*->\s*([A-D]\d{1,2}|No connection))?', re.I)
     for match in pattern.finditer(text):
+        end = match.group(3) or ''
         entries.append({
             'state': match.group(1).lower(),
             'start': match.group(2).upper(),
-            'end': (match.group(3) or '').upper(),
+            'end': 'NO CONNECTION' if end.lower() == 'no connection' else end.upper(),
         })
     return entries
 
@@ -243,6 +244,10 @@ def expected_mate(start: str) -> str:
     return {'A': 'B', 'B': 'A', 'C': 'D', 'D': 'C'}.get(letter, '') + number
 
 
+def is_no_connection(loop) -> bool:
+    return loop.get('state') == 'no-loop-found' and loop.get('end') == 'NO CONNECTION'
+
+
 def topology_svg(monitor):
     name = html_escape(monitor.get('name') or monitor.get('ip') or 'Processor')
     marker_suffix = re.sub(r'[^a-zA-Z0-9_-]+', '-', str(monitor.get('id') or monitor.get('ip') or 'processor'))
@@ -254,9 +259,9 @@ def topology_svg(monitor):
     loop2 = parse_loop_state(monitor.get('loop2_state'))
     show_cd = bool(loop2)
     view_w = 640
-    view_h = 400 if show_cd else 218
+    view_h = 496 if show_cd else 246
     frame_h = view_h - 24
-    rows = {'A': 42, 'B': 122, 'C': 218, 'D': 298} if show_cd else {'A': 42, 'B': 122}
+    rows = {'A': 42, 'B': 150, 'C': 274, 'D': 382} if show_cd else {'A': 42, 'B': 150}
     x0 = 68
     gap = 54
     row_box_x = 36
@@ -277,8 +282,33 @@ def topology_svg(monitor):
 
     arrows = []
     if not unsupported:
+        no_connection_pairs = set()
+        no_connection_by_start = {loop['start']: loop for loop in loop1 + loop2 if is_no_connection(loop)}
+        for start in no_connection_by_start:
+            mate = expected_mate(start)
+            pair = tuple(sorted((start, mate)))
+            if mate not in no_connection_by_start or pair in no_connection_pairs:
+                continue
+            start_x = x_for(start)
+            mate_x = x_for(mate)
+            if start_x is None or mate_x is None or start[0] not in rows or mate[0] not in rows:
+                continue
+            no_connection_pairs.add(pair)
+            top = start if rows[start[0]] < rows[mate[0]] else mate
+            bottom = mate if top == start else start
+            top_x = x_for(top)
+            bottom_x = x_for(bottom)
+            top_y = rows[top[0]] + row_box_h
+            bottom_y = rows[bottom[0]]
+            mid_y = (top_y + bottom_y) / 2
+            gap_y = 12
+            arrows.append(f'<line class="arrow bad" x1="{top_x}" y1="{top_y}" x2="{top_x}" y2="{mid_y - gap_y}" marker-start="url(#{bad_marker})"/>')
+            arrows.append(f'<line class="arrow bad" x1="{bottom_x}" y1="{bottom_y}" x2="{bottom_x}" y2="{mid_y + gap_y}" marker-start="url(#{bad_marker})"/>')
+            arrows.append(f'<text class="error-x" x="{top_x}" y="{mid_y + 8}" text-anchor="middle">X</text>')
         for loop in loop1 + loop2:
             start = loop['start']
+            if tuple(sorted((start, expected_mate(start)))) in no_connection_pairs:
+                continue
             end = loop['end']
             start_x = x_for(start)
             if start_x is None or start[0] not in rows:
