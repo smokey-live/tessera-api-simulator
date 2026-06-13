@@ -21,6 +21,22 @@ APP_NAME = 'Tessera Control and Monitoring'
 
 app = FastAPI(title=APP_NAME, version='3.5.2')
 
+NAV_CSS = ".nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.nav a{color:#8cc7ff;text-decoration:none}.nav a:hover{text-decoration:underline}.nav .active{color:#fff;font-weight:700}"
+
+def page_nav(active: str = '') -> str:
+    items = [
+        ('Home', '/'),
+        ('API Contents', '/api-contents'),
+        ('God Mode', '/god'),
+        ('Processor Logs', '/logs'),
+        ('Topology Monitoring', '/topology'),
+    ]
+    links = []
+    for label, href in items:
+        klass = ' class="active"' if label == active else ''
+        links.append(f'<a{klass} href="{href}">{label}</a>')
+    return '<nav class="nav">' + ' · '.join(links) + '</nav>'
+
 def load_json(p):
     with open(p,'r',encoding='utf-8') as f: return json.load(f)
 ENDPOINTS = load_json(APPDIR/'endpoints.json')
@@ -333,6 +349,7 @@ async def api_contents(q: str = ''):
 <style>
 body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
 h1{{margin:0 0 4px}} .sub{{color:#aaa;margin-bottom:18px}} a{{color:#8cc7ff}} code{{color:#b8e1ff}}
+{NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}}
 .search{{display:flex;gap:8px;margin:18px 0}} input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}}
 .search input{{width:420px;max-width:60vw}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:7px 12px;cursor:pointer}}
@@ -341,7 +358,7 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
 .path{{width:34%}} td:last-child code{{white-space:pre-wrap;word-break:break-word}}
 </style></head>
 <body>
-<div class="top"><div><h1>API Contents</h1><div class="sub">{len(rows)} current endpoint values shown.</div></div><div><a href="/">Home</a> · <a href="/god">God Mode</a> · <a href="/api/">Raw JSON</a></div></div>
+<div class="top"><div><h1>API Contents</h1><div class="sub">{len(rows)} current endpoint values shown.</div></div>{page_nav('API Contents')}</div>
 <form class="search" method="get" action="/api-contents"><input name="q" value="{html_escape(q)}" placeholder="Filter by path or current value"><button>Filter</button><a href="/api-contents">Clear</a></form>
 <table><thead><tr><th>Path</th><th>Type</th><th>Access</th><th>Range</th><th>Current Value</th></tr></thead><tbody>
 {''.join(rows)}
@@ -385,6 +402,7 @@ async def processor_logs(ip: str = '', limit: int = 500, msg: str = ''):
 <style>
 body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
 h1{{margin:0 0 4px}} .sub,.desc{{color:#aaa}} .desc{{font-size:12px;margin-top:3px}} a{{color:#8cc7ff}} code{{color:#b8e1ff}}
+{NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
 .tabs{{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}} .tab{{display:inline-flex;gap:8px;align-items:center;border:1px solid #333;background:#181818;color:#eee;text-decoration:none;border-radius:8px;padding:9px 12px}}
 .tab:hover,.tab.active{{border-color:#5797d6;background:#1d1d1d}} .tab span{{color:#aaa;font-size:12px}}
@@ -395,7 +413,7 @@ table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;
 th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{background:#191919}} td:last-child{{white-space:pre-wrap;word-break:break-word}}
 </style></head>
 <body>
-<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP/TCP port 514.</div></div><div><a href="/">Home</a> · <a href="/api-contents">API Contents</a> · <a href="/god">God Mode</a></div></div>
+<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP/TCP port 514.</div></div>{page_nav('Processor Logs')}</div>
 {flash}
 <div class="tabs">{''.join(buttons)}</div>
 <div class="tools">
@@ -454,24 +472,32 @@ async def topology_page(msg: str = '', level: str = 'info'):
     flash = f'<div class="flash {html_escape(level)}">{html_escape(msg)}</div>' if msg else ''
     remaining = max(0, 20 - len(monitors))
     html = f"""<!doctype html>
-<html><head><meta charset="utf-8"><meta http-equiv="refresh" content="5"><title>Topology Monitoring - {APP_NAME}</title>
+<html><head><meta charset="utf-8"><title>Topology Monitoring - {APP_NAME}</title>
 <style>
 body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
 h1{{margin:0 0 4px}} h2{{margin:0 0 4px;font-size:18px}} .sub{{color:#aaa}} a{{color:#8cc7ff}}
+{NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
-.panel,.monitor{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}}
+.panel{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}} .monitor-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px;align-items:start}} .monitor{{background:#181818;border:1px solid #333;border-radius:8px;padding:10px;min-width:0}}
 .monitor-head{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}}
 .add{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
 input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
 .danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}} .flash.error{{background:#2b1111;border-color:#933;color:#ffd0d0}}
-.topology-svg{{display:block;width:100%;max-width:820px;margin:14px auto 0;background:#000;border-radius:4px}}
-.topology-svg text{{fill:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:28px}} .topology-svg .title{{font-size:30px}}
-.topology-svg .frame,.topology-svg .port-row{{fill:none;stroke:#fff;stroke-width:2}} .topology-svg .port-row{{stroke-width:1.5}}
-.topology-svg .arrow{{stroke-width:5;fill:none}} .topology-svg .arrow.ok{{stroke:#00ff30}} .topology-svg .arrow.bad{{stroke:#ff2828}}
-.topology-svg .unsupported{{fill:#ffcc66;font-size:22px}}
+.topology-svg{{display:block;width:100%;margin:8px auto 0;background:#000;border-radius:4px}}
+.topology-svg text{{fill:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:20px}} .topology-svg .title{{font-size:22px}}
+.topology-svg .frame,.topology-svg .port-row{{fill:none;stroke:#fff;stroke-width:1.5}} .topology-svg .port-row{{stroke-width:1}}
+.topology-svg .arrow{{stroke-width:2.2;fill:none}} .topology-svg .arrow.ok{{stroke:#00ff30}} .topology-svg .arrow.bad{{stroke:#ff2828}}
+.topology-svg .unsupported{{fill:#ffcc66;font-size:16px}}
 </style></head>
+<script>
+setInterval(function(){{
+  var active = document.activeElement;
+  var editing = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
+  if (!editing) window.location.reload();
+}}, 5000);
+</script>
 <body>
-<div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div><div><a href="/">Home</a> · <a href="/logs">Processor Logs</a> · <a href="/god">God Mode</a></div></div>
+<div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div>{page_nav('Topology Monitoring')}</div>
 {flash}
 <section class="panel">
   <form class="add" method="post" action="/topology/add">
@@ -481,7 +507,7 @@ input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;pad
   </form>
   <div class="sub">{remaining} monitoring slots available.</div>
 </section>
-{''.join(cards) if cards else '<section class="panel"><div class="sub">No processors are being monitored yet.</div></section>'}
+{('<div class="monitor-grid">' + ''.join(cards) + '</div>') if cards else '<section class="panel"><div class="sub">No processors are being monitored yet.</div></section>'}
 </body></html>"""
     return HTMLResponse(html)
 
@@ -820,6 +846,7 @@ async def god_page(q: str = '', msg: str = '', level: str = 'info'):
 body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
 h1{{margin:0 0 4px}} .sub{{color:#aaa;margin-bottom:18px}}
 a{{color:#8cc7ff}} code{{color:#b8e1ff}}
+{NAV_CSS}
 .search{{display:flex;gap:8px;margin:18px 0}} input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}}
 .search input{{width:420px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:7px 12px;cursor:pointer}}
 table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
@@ -836,7 +863,7 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
 {flash}
 {preset_panel_html()}
 <form class="search" method="get" action="/god"><input name="q" value="{html_escape(q)}" placeholder="Filter by path or current value"><button>Filter</button><a href="/god">Clear</a></form>
-<div class="sub"><a href="/">Home</a> · <a href="/api-contents">View API Contents</a> · API root: <a href="/api/">/api/</a> · JSON dump: <a href="/god/state">/god/state</a></div>
+<div class="sub">{page_nav('God Mode')} · API root: <a href="/api/">/api/</a> · JSON dump: <a href="/god/state">/god/state</a></div>
 <table><thead><tr><th>Path</th><th>Type</th><th>API Access</th><th>Range</th><th>Value</th></tr></thead><tbody>
 {''.join(rows)}
 </tbody></table>

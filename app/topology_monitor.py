@@ -202,37 +202,43 @@ def topology_svg(monitor):
     bad_marker = f'arrow-bad-{marker_suffix}'
     processor_type = str(monitor.get('processor_type') or '').lower()
     unsupported = processor_type and processor_type != SUPPORTED_TYPE
-    rows = {'A': 96, 'B': 232, 'C': 368, 'D': 504}
-    x0 = 86
-    gap = 64
-    row_box_x = 48
-    row_box_w = 664
-    row_box_h = 56
+    loop1 = parse_loop_state(monitor.get('loop1_state'))
+    loop2 = parse_loop_state(monitor.get('loop2_state'))
+    show_cd = bool(loop2)
+    view_w = 640
+    view_h = 492 if show_cd else 292
+    frame_h = view_h - 24
+    rows = {'A': 78, 'B': 176, 'C': 286, 'D': 384} if show_cd else {'A': 78, 'B': 176}
+    x0 = 68
+    gap = 54
+    row_box_x = 36
+    row_box_w = 568
+    row_box_h = 42
 
     def x_for(port):
         number = port_number(port)
         return x0 + (number - 1) * gap if number else None
 
     row_markup = []
-    for letter in ('A', 'B', 'C', 'D'):
+    for letter in ('A', 'B', 'C', 'D') if show_cd else ('A', 'B'):
         y = rows[letter]
         labels = []
         for number in range(1, 11):
-            labels.append(f'<text x="{x0 + (number - 1) * gap}" y="{y + 36}" text-anchor="middle">{letter}{number}</text>')
+            labels.append(f'<text x="{x0 + (number - 1) * gap}" y="{y + 29}" text-anchor="middle">{letter}{number}</text>')
         row_markup.append(f'<rect class="port-row" x="{row_box_x}" y="{y}" width="{row_box_w}" height="{row_box_h}"/>{"".join(labels)}')
 
     arrows = []
     if not unsupported:
-        for loop in parse_loop_state(monitor.get('loop1_state')) + parse_loop_state(monitor.get('loop2_state')):
+        for loop in loop1 + loop2:
             start = loop['start']
             end = loop['end']
             start_x = x_for(start)
-            if start_x is None:
+            if start_x is None or start[0] not in rows:
                 continue
             start_letter = start[0]
             good = loop['state'] == 'loop-found' and end == expected_mate(start)
             css = 'ok' if good else 'bad'
-            if end and x_for(end) is not None:
+            if end and x_for(end) is not None and end[0] in rows:
                 end_x = x_for(end)
                 y1 = rows[start_letter] + row_box_h
                 y2 = rows[end[0]]
@@ -240,7 +246,7 @@ def topology_svg(monitor):
                 arrows.append(f'<line class="arrow {css}" x1="{start_x}" y1="{y1}" x2="{end_x}" y2="{y2}" {marker}/>')
             else:
                 y1 = rows[start_letter] + row_box_h
-                direction = 74 if start_letter in ('A', 'C') else -74
+                direction = 48 if start_letter in ('A', 'C') else -48
                 y2 = y1 + direction
                 marker = f'marker-start="url(#{ok_marker})" marker-end="url(#{ok_marker})"' if good else f'marker-end="url(#{bad_marker})"'
                 arrows.append(f'<line class="arrow {css}" x1="{start_x}" y1="{y1}" x2="{start_x}" y2="{y2}" {marker}/>')
@@ -248,17 +254,17 @@ def topology_svg(monitor):
     status = ''
     if unsupported:
         label = html_escape(monitor.get('processor_type') or 'unknown')
-        status = f'<text class="unsupported" x="380" y="302" text-anchor="middle">Loop monitoring not currently supported for {label}</text>'
+        status = f'<text class="unsupported" x="{view_w / 2}" y="{view_h / 2}" text-anchor="middle">Loop monitoring not currently supported for {label}</text>'
     elif monitor.get('last_status') == 'error':
-        status = f'<text class="unsupported" x="380" y="302" text-anchor="middle">{html_escape(monitor.get("last_error") or "Polling error")}</text>'
+        status = f'<text class="unsupported" x="{view_w / 2}" y="{view_h / 2}" text-anchor="middle">{html_escape(monitor.get("last_error") or "Polling error")}</text>'
 
-    return f"""<svg class="topology-svg" viewBox="0 0 760 600" role="img" aria-label="Topology for {name}">
+    return f"""<svg class="topology-svg" viewBox="0 0 {view_w} {view_h}" role="img" aria-label="Topology for {name}">
 <defs>
-  <marker id="{ok_marker}" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="#00ff30"/></marker>
-  <marker id="{bad_marker}" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 Z" fill="#ff2828"/></marker>
+  <marker id="{ok_marker}" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7 Z" fill="#00ff30"/></marker>
+  <marker id="{bad_marker}" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7 Z" fill="#ff2828"/></marker>
 </defs>
-<rect class="frame" x="18" y="18" width="724" height="564"/>
-<text class="title" x="380" y="62" text-anchor="middle">{name}</text>
+<rect class="frame" x="12" y="12" width="{view_w - 24}" height="{frame_h}"/>
+<text class="title" x="{view_w / 2}" y="48" text-anchor="middle">{name}</text>
 {''.join(row_markup)}
 {''.join(arrows)}
 {status}
