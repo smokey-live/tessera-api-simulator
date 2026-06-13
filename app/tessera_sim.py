@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, HTMLResponse, RedirectResponse
 from log_store import clear_logs, export_logs_csv, list_logs, list_processors, refresh_processor_name
+from topology_monitor import add_monitor, list_monitors, poll_due_monitors, remove_monitor, topology_svg
 
 BASE = Path(os.environ.get('TESSERA_SIM_BASE','/var/lib/tessera-sim'))
 APPDIR = Path(__file__).resolve().parent
@@ -302,6 +303,7 @@ a{{color:#8cc7ff}}
   <a class="action" href="/api-contents"><b>View API Contents</b><span>Browse the simulator's current API state as a searchable table.</span></a>
   <a class="action" href="/god"><b>God Mode</b><span>Edit API endpoints directly to simulate different processor states.</span></a>
   <a class="action" href="/logs"><b>Processor Logs</b><span>View syslog messages received from Tessera processors.</span></a>
+  <a class="action" href="/topology"><b>Topology Monitoring</b><span>Monitor SX40 cable redundancy loop status.</span></a>
 </div>
 <div class="meta">Raw API data is still available at <a href="/api/">/api/</a>.</div>
 </main></body></html>""")
@@ -427,6 +429,78 @@ async def logs_clear(request: Request):
     from urllib.parse import urlencode
     qs = urlencode({'ip': ip, 'msg': f'Cleared logs for {ip}.'}) if ip else ''
     return RedirectResponse('/logs' + (('?' + qs) if qs else ''), status_code=303)
+
+@app.get('/topology', response_class=HTMLResponse)
+async def topology_page(msg: str = '', level: str = 'info'):
+    monitors = list_monitors()
+    cards = []
+    for monitor in monitors:
+        status = html_escape(monitor.get('last_status') or 'pending')
+        error = html_escape(monitor.get('last_error') or '')
+        last = html_escape(monitor.get('last_poll_at') or 'not polled yet')
+        processor_type = html_escape(monitor.get('processor_type') or 'unknown')
+        cards.append(f"""
+        <section class="monitor">
+          <div class="monitor-head">
+            <div><h2>{html_escape(monitor.get('name') or monitor.get('ip'))}</h2><div class="sub">{html_escape(monitor.get('ip'))} · {processor_type} · every {int(monitor.get('interval') or 10)}s · last poll {last}</div></div>
+            <form method="post" action="/topology/remove" onsubmit="return confirm('Remove this processor from topology monitoring?');">
+              <input type="hidden" name="id" value="{html_escape(monitor.get('id'))}">
+              <button class="danger">Remove</button>
+            </form>
+          </div>
+          <div class="sub">Status: {status}{(' · ' + error) if error else ''}</div>
+          {topology_svg(monitor)}
+        </section>""")
+    flash = f'<div class="flash {html_escape(level)}">{html_escape(msg)}</div>' if msg else ''
+    remaining = max(0, 20 - len(monitors))
+    html = f"""<!doctype html>
+<html><head><meta charset="utf-8"><meta http-equiv="refresh" content="5"><title>Topology Monitoring - {APP_NAME}</title>
+<style>
+body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
+h1{{margin:0 0 4px}} h2{{margin:0 0 4px;font-size:18px}} .sub{{color:#aaa}} a{{color:#8cc7ff}}
+.top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
+.panel,.monitor{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}}
+.monitor-head{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}}
+.add{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
+input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+.danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}} .flash.error{{background:#2b1111;border-color:#933;color:#ffd0d0}}
+.topology-svg{{display:block;width:100%;max-width:820px;margin:14px auto 0;background:#000;border-radius:4px}}
+.topology-svg text{{fill:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:28px}} .topology-svg .title{{font-size:30px}}
+.topology-svg .frame,.topology-svg .port-row{{fill:none;stroke:#fff;stroke-width:2}} .topology-svg .port-row{{stroke-width:1.5}}
+.topology-svg .arrow{{stroke-width:5;fill:none}} .topology-svg .arrow.ok{{stroke:#00ff30}} .topology-svg .arrow.bad{{stroke:#ff2828}}
+.topology-svg .unsupported{{fill:#ffcc66;font-size:22px}}
+</style></head>
+<body>
+<div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div><div><a href="/">Home</a> · <a href="/logs">Processor Logs</a> · <a href="/god">God Mode</a></div></div>
+{flash}
+<section class="panel">
+  <form class="add" method="post" action="/topology/add">
+    <div><label>Processor IP address</label><input name="ip" placeholder="192.168.0.101" required></div>
+    <div><label>Polling frequency seconds</label><input name="interval" type="number" min="1" value="10"></div>
+    <button {'disabled' if remaining == 0 else ''}>Add Processor</button>
+  </form>
+  <div class="sub">{remaining} monitoring slots available.</div>
+</section>
+{''.join(cards) if cards else '<section class="panel"><div class="sub">No processors are being monitored yet.</div></section>'}
+</body></html>"""
+    return HTMLResponse(html)
+
+@app.post('/topology/add')
+async def topology_add(request: Request):
+    from urllib.parse import urlencode
+    form = await request.form()
+    try:
+        add_monitor(str(form.get('ip', '')), int(form.get('interval') or 10))
+        qs = urlencode({'msg': 'Processor added to topology monitoring.', 'level': 'info'})
+    except Exception as ex:
+        qs = urlencode({'msg': str(ex), 'level': 'error'})
+    return RedirectResponse('/topology?' + qs, status_code=303)
+
+@app.post('/topology/remove')
+async def topology_remove(request: Request):
+    form = await request.form()
+    remove_monitor(str(form.get('id', '')))
+    return RedirectResponse('/topology', status_code=303)
 
 async def handle_tcp(reader, writer):
     writer.write(b'Tessera Control and Monitoring ready. Commands: get/set/list/help <path> [value]\n'); await writer.drain()
@@ -652,9 +726,15 @@ async def live_read_loop():
             cfg.update({'last_status':'error', 'last_error': str(ex), 'last_attempt': datetime.now().isoformat(timespec='seconds')}); write_live_config(cfg)
         await asyncio.sleep(interval)
 
+async def topology_monitor_loop():
+    while True:
+        await asyncio.to_thread(poll_due_monitors)
+        await asyncio.sleep(1)
+
 @app.on_event('startup')
 async def start_live_task():
     asyncio.create_task(live_read_loop())
+    asyncio.create_task(topology_monitor_loop())
 
 def preset_panel_html():
     presets = list_presets(); cfg = live_config(); cards=[]

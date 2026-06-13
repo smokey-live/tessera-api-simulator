@@ -12,6 +12,7 @@ This project was built around the Tessera IP Control API 3.5.2 behavior and a re
 - API contents browser at `/api-contents`
 - Processor syslog collection on UDP/TCP port `514`
 - Processor log viewer at `/logs` with CSV export and per-processor clearing
+- SX40 topology monitoring at `/topology`
 - Persistent writable API state
 - Endpoint validation for known datatypes, ranges and access rules
 - Read-only enforcement for normal API clients
@@ -136,6 +137,7 @@ journalctl -u tessera-sim-syslog.service -f
 /opt/tessera-sim              installed application
 /var/lib/tessera-sim/state.json
 /var/lib/tessera-sim/processor_logs.db
+/var/lib/tessera-sim/topology_monitors.json
 /var/lib/tessera-sim/files
 /var/lib/tessera-sim/presets
 ```
@@ -147,6 +149,19 @@ Configure Tessera processors to send syslog to the server IP. The collector list
 Log entries are timestamped with the local server receive time because processor clocks are often wrong. The collector stores the sender IP and refreshes the processor display name from `http://PROCESSOR_IP/api/system/processor-name` every 10 minutes.
 
 The `/logs` page shows received logs by processor, can export CSV for a chosen number of minutes back from the present, and can clear logs for an individual processor. Logs older than 7 days are pruned automatically.
+
+## Topology Monitoring
+
+The `/topology` page can monitor up to 20 processors. Each monitor stores the processor IP address and polling interval, defaulting to 10 seconds.
+
+Topology polling only requests the endpoints required for this feature:
+
+- `/api/system/processor-name`
+- `/api/system/processor-type`
+- `/api/output/network/cable-redundancy/loops/1/state`
+- `/api/output/network/cable-redundancy/loops/2/state`
+
+Only SX40 loop rendering is currently supported. Other processor types display "Loop monitoring not currently supported."
 
 ## Notes
 

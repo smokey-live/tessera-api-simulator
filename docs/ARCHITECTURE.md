@@ -9,6 +9,7 @@ Runtime data lives in `/var/lib/tessera-sim`:
 - `presets/` - saved preset JSON snapshots with name and notes
 - `live_read.json` - Live Read status/configuration
 - `processor_logs.db` - SQLite store for processor syslog messages and cached processor names
+- `topology_monitors.json` - configured processor topology monitors and last poll results
 
 Application files live in `/opt/tessera-sim`:
 
@@ -42,3 +43,7 @@ Live Read is a safety buffer for API-client development. The simulator polls a r
 The syslog collector listens on UDP and TCP port 514. Incoming messages are stored with the server receive time, sender IP address and transport because processor clocks may be wrong and different processors may send logs to the same collector.
 
 Processor names are cached from `/api/system/processor-name` on each sender IP and refreshed every 10 minutes. Logs older than 7 days are deleted by the collector.
+
+## Topology Monitoring
+
+Topology monitors are polled by the HTTP application background task. Each monitor requests processor name, processor type, and the two cable redundancy loop state endpoints only. SX40 responses are rendered as SVG diagrams with green loop arrows and red error arrows.
