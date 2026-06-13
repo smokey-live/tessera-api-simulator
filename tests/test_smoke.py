@@ -13,7 +13,7 @@ sys.path.insert(0, str(APP_DIR))
 from fastapi.testclient import TestClient  # noqa: E402
 import tessera_sim  # noqa: E402
 import topology_monitor  # noqa: E402
-from log_store import parse_syslog_message  # noqa: E402
+from log_store import list_logs, record_log, set_processor_ignored, set_processor_paused, parse_syslog_message  # noqa: E402
 
 
 class TesseraSimulatorSmokeTests(unittest.TestCase):
@@ -44,6 +44,13 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertIn("Processor Logs", response.text)
         self.assertIn("No logs received yet.", response.text)
 
+    def test_processor_log_management_page_loads(self):
+        response = self.client.get("/logs/manage")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Manage Processor Logs", response.text)
+        self.assertIn("Storage used by logs", response.text)
+
     def test_processor_logs_export_returns_csv(self):
         response = self.client.get("/logs/export?minutes=60")
 
@@ -62,6 +69,19 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertEqual(processor_time, "Jun 12 21:59:46")
         self.assertEqual(message_type, "tessera")
         self.assertEqual(message, "Source Auth: requests authentication")
+
+    def test_paused_and_ignored_log_collection(self):
+        record_log("192.0.2.50", "UDP", "<13>Jun 12 21:59:46 tessera: before pause")
+        set_processor_paused("192.0.2.50", True)
+        record_log("192.0.2.50", "UDP", "<13>Jun 12 21:59:47 tessera: while paused")
+        self.assertEqual([row["message"] for row in list_logs("192.0.2.50")], ["before pause"])
+
+        set_processor_paused("192.0.2.50", False)
+        self.assertEqual([row["message"] for row in list_logs("192.0.2.50")], ["while paused", "before pause"])
+
+        set_processor_ignored("192.0.2.50", True)
+        record_log("192.0.2.50", "UDP", "<13>Jun 12 21:59:48 tessera: ignored")
+        self.assertNotIn("ignored", [row["message"] for row in list_logs("192.0.2.50")])
 
     def test_topology_page_loads_without_monitors(self):
         response = self.client.get("/topology")

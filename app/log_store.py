@@ -3,6 +3,7 @@ import io
 import json
 import os
 import re
+import shutil
 import sqlite3
 import time
 import urllib.request
@@ -16,6 +17,7 @@ BASE = Path(os.environ.get('TESSERA_SIM_BASE', '/var/lib/tessera-sim'))
 LOG_DB = BASE / 'processor_logs.db'
 RETENTION_SECONDS = 7 * 24 * 60 * 60
 NAME_REFRESH_SECONDS = 10 * 60
+PAUSED_BUFFER_SECONDS = 2 * 60 * 60
 
 
 def now_epoch() -> float:
@@ -61,11 +63,35 @@ def init_log_db():
                 ip TEXT PRIMARY KEY,
                 name TEXT,
                 name_checked_epoch REAL DEFAULT 0,
-                last_seen_epoch REAL DEFAULT 0
+                last_seen_epoch REAL DEFAULT 0,
+                paused INTEGER DEFAULT 0,
+                ignored INTEGER DEFAULT 0
+            )
+        """)
+        processor_columns = {row['name'] for row in conn.execute("PRAGMA table_info(processors)").fetchall()}
+        if 'paused' not in processor_columns:
+            conn.execute("ALTER TABLE processors ADD COLUMN paused INTEGER DEFAULT 0")
+        if 'ignored' not in processor_columns:
+            conn.execute("ALTER TABLE processors ADD COLUMN ignored INTEGER DEFAULT 0")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS paused_log_buffer (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                received_epoch REAL NOT NULL,
+                received_at TEXT NOT NULL,
+                processor_ip TEXT NOT NULL,
+                transport TEXT NOT NULL,
+                priority INTEGER,
+                facility INTEGER,
+                severity INTEGER,
+                processor_time TEXT,
+                message_type TEXT,
+                message TEXT NOT NULL,
+                raw_message TEXT NOT NULL
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_processor_logs_ip_epoch ON processor_logs(processor_ip, received_epoch)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_processor_logs_epoch ON processor_logs(received_epoch)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_paused_log_buffer_ip_epoch ON paused_log_buffer(processor_ip, received_epoch)")
         rows = conn.execute("""
             SELECT id, raw_message
             FROM processor_logs
@@ -78,6 +104,7 @@ def init_log_db():
                 SET processor_time = ?, message_type = ?, message = ?
                 WHERE id = ?
             """, (processor_time, message_type, message, row['id']))
+        conn.execute("DELETE FROM paused_log_buffer WHERE received_epoch < ?", (now_epoch() - PAUSED_BUFFER_SECONDS,))
 
 
 def parse_syslog_message(raw: str):
@@ -111,6 +138,7 @@ def prune_old_logs():
     cutoff = now_epoch() - RETENTION_SECONDS
     with connect() as conn:
         conn.execute("DELETE FROM processor_logs WHERE received_epoch < ?", (cutoff,))
+        conn.execute("DELETE FROM paused_log_buffer WHERE received_epoch < ?", (now_epoch() - PAUSED_BUFFER_SECONDS,))
 
 
 def processor_name_is_stale(row: sqlite3.Row | None) -> bool:
@@ -170,13 +198,18 @@ def record_log(processor_ip: str, transport: str, raw_message: str):
             VALUES (?, ?)
             ON CONFLICT(ip) DO UPDATE SET last_seen_epoch = excluded.last_seen_epoch
         """, (processor_ip, ts))
+        processor = conn.execute("SELECT paused, ignored FROM processors WHERE ip = ?", (processor_ip,)).fetchone()
+        if processor and int(processor['ignored'] or 0):
+            return
+        target = 'paused_log_buffer' if processor and int(processor['paused'] or 0) else 'processor_logs'
         conn.execute("""
-            INSERT INTO processor_logs (
+            INSERT INTO {target} (
                 received_epoch, received_at, processor_ip, transport,
                 priority, facility, severity, processor_time, message_type,
                 message, raw_message
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (ts, now_text(ts), processor_ip, transport, priority, facility, severity, processor_time, message_type, message, raw_message.strip('\x00\r\n')))
+        """.format(target=target), (ts, now_text(ts), processor_ip, transport, priority, facility, severity, processor_time, message_type, message, raw_message.strip('\x00\r\n')))
+        conn.execute("DELETE FROM paused_log_buffer WHERE received_epoch < ?", (ts - PAUSED_BUFFER_SECONDS,))
     if int(ts) % 60 == 0:
         prune_old_logs()
     refresh_processor_name(processor_ip)
@@ -186,9 +219,12 @@ def list_processors():
     init_log_db()
     with connect() as conn:
         rows = conn.execute("""
-            SELECT p.ip, COALESCE(p.name, p.ip) AS name, p.last_seen_epoch, COUNT(l.id) AS log_count
+            SELECT p.ip, COALESCE(p.name, p.ip) AS name, p.last_seen_epoch,
+                   COALESCE(p.paused, 0) AS paused, COALESCE(p.ignored, 0) AS ignored,
+                   COUNT(l.id) AS log_count,
+                   (SELECT COUNT(*) FROM paused_log_buffer b WHERE b.processor_ip = p.ip) AS buffered_count
             FROM processors p
-            JOIN processor_logs l ON l.processor_ip = p.ip
+            LEFT JOIN processor_logs l ON l.processor_ip = p.ip
             GROUP BY p.ip
             ORDER BY LOWER(name), p.ip
         """).fetchall()
@@ -228,7 +264,117 @@ def clear_logs(processor_ip: str):
     init_log_db()
     with connect() as conn:
         conn.execute("DELETE FROM processor_logs WHERE processor_ip = ?", (processor_ip,))
-        conn.execute("DELETE FROM processors WHERE ip = ? AND NOT EXISTS (SELECT 1 FROM processor_logs WHERE processor_ip = ?)", (processor_ip, processor_ip))
+        conn.execute("DELETE FROM paused_log_buffer WHERE processor_ip = ?", (processor_ip,))
+
+
+def clear_all_logs():
+    init_log_db()
+    with connect() as conn:
+        conn.execute("DELETE FROM processor_logs")
+        conn.execute("DELETE FROM paused_log_buffer")
+
+
+def set_processor_paused(processor_ip: str, paused: bool):
+    init_log_db()
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO processors (ip, last_seen_epoch, paused)
+            VALUES (?, ?, ?)
+            ON CONFLICT(ip) DO UPDATE SET paused = excluded.paused
+        """, (processor_ip, now_epoch(), 1 if paused else 0))
+        if not paused:
+            conn.execute("DELETE FROM paused_log_buffer WHERE received_epoch < ?", (now_epoch() - PAUSED_BUFFER_SECONDS,))
+            conn.execute("""
+                INSERT INTO processor_logs (
+                    received_epoch, received_at, processor_ip, transport,
+                    priority, facility, severity, processor_time, message_type,
+                    message, raw_message
+                )
+                SELECT received_epoch, received_at, processor_ip, transport,
+                       priority, facility, severity, processor_time, message_type,
+                       message, raw_message
+                FROM paused_log_buffer
+                WHERE processor_ip = ?
+                ORDER BY received_epoch ASC
+            """, (processor_ip,))
+            conn.execute("DELETE FROM paused_log_buffer WHERE processor_ip = ?", (processor_ip,))
+
+
+def set_processor_ignored(processor_ip: str, ignored: bool):
+    init_log_db()
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO processors (ip, last_seen_epoch, ignored, paused)
+            VALUES (?, ?, ?, 0)
+            ON CONFLICT(ip) DO UPDATE SET
+                ignored = excluded.ignored,
+                paused = CASE WHEN excluded.ignored = 1 THEN 0 ELSE processors.paused END
+        """, (processor_ip, now_epoch(), 1 if ignored else 0))
+        if ignored:
+            conn.execute("DELETE FROM paused_log_buffer WHERE processor_ip = ?", (processor_ip,))
+
+
+def format_bytes(size: float) -> str:
+    units = ['B', 'KB', 'MB', 'GB', 'TB']
+    value = float(size or 0)
+    for unit in units:
+        if value < 1024 or unit == units[-1]:
+            return f'{value:.1f} {unit}' if unit != 'B' else f'{int(value)} B'
+        value /= 1024
+
+
+def log_storage_summary():
+    init_log_db()
+    db_bytes = LOG_DB.stat().st_size if LOG_DB.exists() else 0
+    usage = shutil.disk_usage(str(BASE))
+    with connect() as conn:
+        total_payload = conn.execute("""
+            SELECT COALESCE(SUM(LENGTH(raw_message) + LENGTH(message) + LENGTH(COALESCE(processor_time, ''))), 0)
+            FROM processor_logs
+        """).fetchone()[0] or 0
+        rows = conn.execute("""
+            SELECT p.ip, COALESCE(p.name, p.ip) AS name,
+                   COALESCE(p.paused, 0) AS paused,
+                   COALESCE(p.ignored, 0) AS ignored,
+                   COUNT(l.id) AS log_count,
+                   COALESCE(SUM(LENGTH(l.raw_message) + LENGTH(l.message) + LENGTH(COALESCE(l.processor_time, ''))), 0) AS payload_bytes,
+                   MIN(l.received_epoch) AS first_epoch,
+                   MAX(l.received_epoch) AS last_epoch,
+                   (SELECT COUNT(*) FROM paused_log_buffer b WHERE b.processor_ip = p.ip) AS buffered_count
+            FROM processors p
+            LEFT JOIN processor_logs l ON l.processor_ip = p.ip
+            GROUP BY p.ip
+            ORDER BY LOWER(name), p.ip
+        """).fetchall()
+    processors = []
+    for row in rows:
+        payload = float(row['payload_bytes'] or 0)
+        estimated = int(db_bytes * (payload / total_payload)) if total_payload else 0
+        count = int(row['log_count'] or 0)
+        first_epoch = row['first_epoch']
+        last_epoch = row['last_epoch']
+        span = (float(last_epoch) - float(first_epoch)) if first_epoch and last_epoch and last_epoch > first_epoch else 0
+        per_minute = (count / (span / 60)) if span else float(count)
+        processors.append({
+            'ip': row['ip'],
+            'name': row['name'] or row['ip'],
+            'paused': bool(row['paused']),
+            'ignored': bool(row['ignored']),
+            'log_count': count,
+            'buffered_count': int(row['buffered_count'] or 0),
+            'estimated_bytes': estimated,
+            'estimated_display': format_bytes(estimated),
+            'messages_per_minute': per_minute,
+        })
+    return {
+        'db_bytes': db_bytes,
+        'db_display': format_bytes(db_bytes),
+        'free_bytes': usage.free,
+        'free_display': format_bytes(usage.free),
+        'total_bytes': usage.total,
+        'total_display': format_bytes(usage.total),
+        'processors': processors,
+    }
 
 
 def export_logs_csv(minutes_back: int, processor_ip: str = '') -> str:

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, HTMLResponse, RedirectResponse
-from log_store import clear_logs, export_logs_csv, list_logs, list_processors, refresh_processor_name
+from log_store import clear_all_logs, clear_logs, export_logs_csv, list_logs, list_processors, log_storage_summary, refresh_processor_name, set_processor_ignored, set_processor_paused
 from topology_monitor import add_monitor, get_cards_wide, list_monitors, poll_due_monitors, remove_monitor, reorder_monitors, set_cards_wide, topology_svg
 
 BASE = Path(os.environ.get('TESSERA_SIM_BASE','/var/lib/tessera-sim'))
@@ -379,21 +379,24 @@ async def processor_logs(ip: str = '', limit: int = 500, q: str = '', msg: str =
     for row in initial_logs:
         rows.append(f"""
         <tr data-log-id="{int(row['id'])}">
-          <td><span class="server-time" data-epoch="{float(row['received_epoch'])}">{html_escape(row['received_at'])}</span></td>
-          <td>{html_escape(row['processor_name'])}<div class="desc">{html_escape(row['processor_ip'])}</div></td>
-          <td>{html_escape(row.get('message_type') or '')}</td>
-          <td>{html_escape(row['message'])}</td>
+          <td class="col-time"><span class="server-time" data-epoch="{float(row['received_epoch'])}">{html_escape(row['received_at'])}</span></td>
+          <td class="col-processor">{html_escape(row['processor_name'])}</td>
+          <td class="col-ip">{html_escape(row['processor_ip'])}</td>
+          <td class="col-type">{html_escape(row.get('message_type') or '')}</td>
+          <td class="col-message">{html_escape(row['message'])}</td>
         </tr>""")
     from urllib.parse import urlencode
     base_query = {'q': q} if q else {}
     buttons = [f'<a class="tab{" active" if not selected_ip else ""}" href="/logs{("?" + urlencode(base_query)) if base_query else ""}">All Processors</a>']
     for processor in processors:
         active = ' active' if processor['ip'] == selected_ip else ''
-        label = html_escape(processor['name'] or processor['ip'])
+        name = processor['name'] or processor['ip']
+        label = html_escape(name)
+        ip_label = '' if name == processor['ip'] else f'<small>{html_escape(processor["ip"])}</small>'
         count = int(processor['log_count'] or 0)
         query = dict(base_query)
         query['ip'] = processor['ip']
-        buttons.append(f'<a class="tab{active}" href="/logs?{html_escape(urlencode(query))}">{label}<span>{count}</span></a>')
+        buttons.append(f'<a class="tab{active}" href="/logs?{html_escape(urlencode(query))}"><span class="tab-label">{label}{ip_label}</span><span>{count}</span></a>')
     clear_form = ''
     if selected_ip:
         clear_form = f"""<form method="post" action="/logs/clear" onsubmit="return confirm('Clear logs for this processor?');">
@@ -404,6 +407,7 @@ async def processor_logs(ip: str = '', limit: int = 500, q: str = '', msg: str =
     export_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
     search_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
     max_id = max((int(row['id']) for row in initial_logs), default=0)
+    storage = log_storage_summary()
     html = f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Processor Logs - {APP_NAME}</title>
 <style>
@@ -411,14 +415,17 @@ body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;co
 h1{{margin:0 0 4px}} .sub,.desc{{color:#aaa}} .desc{{font-size:12px;margin-top:3px}} a{{color:#8cc7ff}} code{{color:#b8e1ff}}
 {NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
-.tzbar{{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin:-8px 0 14px;color:#aaa;font-size:13px}}
+.statusbar{{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:-8px 0 14px;color:#aaa;font-size:13px}} .statusbar b{{color:#eee}}
+.tzbar{{display:flex;gap:8px;align-items:center}}
 .tabs{{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}} .tab{{display:inline-flex;gap:8px;align-items:center;border:1px solid #333;background:#181818;color:#eee;text-decoration:none;border-radius:8px;padding:9px 12px}}
-.tab:hover,.tab.active{{border-color:#5797d6;background:#1d1d1d}} .tab span{{color:#aaa;font-size:12px}}
+.tab:hover,.tab.active{{border-color:#5797d6;background:#1d1d1d}} .tab span{{color:#aaa;font-size:12px}} .tab-label{{display:flex;flex-direction:column;color:#eee;font-size:14px}} .tab-label small{{color:#aaa;font-size:11px;margin-top:2px}}
 .tools{{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:16px 0}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
 input,select{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+.column-controls{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 12px;color:#aaa;font-size:13px}} .column-controls label{{display:inline-flex;gap:5px;align-items:center;margin:0}} .column-controls input{{padding:0}}
 .danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}}
-table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
-th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{background:#191919}} td:last-child{{white-space:pre-wrap;word-break:break-word}}
+table{{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
+th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top;overflow:hidden;text-overflow:ellipsis}} th{{position:relative}} .resize-handle{{position:absolute;right:0;top:0;width:7px;height:100%;cursor:col-resize}} tr:hover{{background:#191919}} .col-message{{white-space:pre-wrap;word-break:break-word;overflow:visible;text-overflow:clip}}
+.hidden-column{{display:none}}
 </style></head>
 <script>
 let latestLogId = {max_id};
@@ -426,6 +433,8 @@ let logsPaused = false;
 const selectedLogIp = {json.dumps(selected_ip)};
 const selectedLogSearch = {json.dumps(q)};
 const selectedLogLimit = {int(max(1, min(int(limit or 500), 5000)))};
+const logColumns = ['time', 'processor', 'ip', 'type', 'message'];
+const defaultColumnWidths = {{time: 210, processor: 220, ip: 140, type: 90, message: 700}};
 function timezoneList() {{
   if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone');
   return ['UTC','America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Europe/London','Europe/Berlin','Asia/Tokyo','Australia/Sydney'];
@@ -459,6 +468,63 @@ function refreshVisibleTimes() {{
     el.textContent = formatLogTime(el.dataset.epoch);
   }});
 }}
+function columnSettings() {{
+  try {{ return JSON.parse(localStorage.getItem('tesseraLogColumns') || '{{}}'); }}
+  catch (error) {{ return {{}}; }}
+}}
+function saveColumnSettings(settings) {{
+  localStorage.setItem('tesseraLogColumns', JSON.stringify(settings));
+}}
+function applyColumnSettings() {{
+  const settings = columnSettings();
+  logColumns.forEach(function(col) {{
+    const visible = settings[col]?.visible !== false;
+    document.querySelectorAll('.col-' + col).forEach(function(el) {{
+      el.classList.toggle('hidden-column', !visible);
+    }});
+    const checkbox = document.querySelector(`.column-toggle[data-col="${{col}}"]`);
+    if (checkbox) checkbox.checked = visible;
+    const colEl = document.querySelector(`col[data-col="${{col}}"]`);
+    if (colEl) {{
+      colEl.classList.toggle('hidden-column', !visible);
+      colEl.style.width = (settings[col]?.width || defaultColumnWidths[col]) + 'px';
+    }}
+  }});
+}}
+function bindColumnControls() {{
+  document.querySelectorAll('.column-toggle').forEach(function(input) {{
+    input.addEventListener('change', function() {{
+      const settings = columnSettings();
+      settings[input.dataset.col] = settings[input.dataset.col] || {{}};
+      settings[input.dataset.col].visible = input.checked;
+      saveColumnSettings(settings);
+      applyColumnSettings();
+    }});
+  }});
+  document.querySelectorAll('.resize-handle').forEach(function(handle) {{
+    handle.addEventListener('mousedown', function(event) {{
+      event.preventDefault();
+      const col = handle.dataset.col;
+      const colEl = document.querySelector(`col[data-col="${{col}}"]`);
+      const startX = event.clientX;
+      const startWidth = colEl ? colEl.getBoundingClientRect().width : defaultColumnWidths[col];
+      function move(moveEvent) {{
+        const width = Math.max(60, startWidth + moveEvent.clientX - startX);
+        const settings = columnSettings();
+        settings[col] = settings[col] || {{}};
+        settings[col].width = Math.round(width);
+        saveColumnSettings(settings);
+        applyColumnSettings();
+      }}
+      function up() {{
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      }}
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    }});
+  }});
+}}
 function escapeHtml(value) {{
   return String(value ?? '').replace(/[&<>"']/g, function(ch) {{
     return {{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[ch];
@@ -466,10 +532,11 @@ function escapeHtml(value) {{
 }}
 function logRowHtml(row) {{
   return `<tr data-log-id="${{row.id}}">
-    <td><span class="server-time" data-epoch="${{row.received_epoch}}">${{formatLogTime(row.received_epoch)}}</span></td>
-    <td>${{escapeHtml(row.processor_name)}}<div class="desc">${{escapeHtml(row.processor_ip)}}</div></td>
-    <td>${{escapeHtml(row.message_type || '')}}</td>
-    <td>${{escapeHtml(row.message)}}</td>
+    <td class="col-time"><span class="server-time" data-epoch="${{row.received_epoch}}">${{formatLogTime(row.received_epoch)}}</span></td>
+    <td class="col-processor">${{escapeHtml(row.processor_name)}}</td>
+    <td class="col-ip">${{escapeHtml(row.processor_ip)}}</td>
+    <td class="col-type">${{escapeHtml(row.message_type || '')}}</td>
+    <td class="col-message">${{escapeHtml(row.message)}}</td>
   </tr>`;
 }}
 async function refreshLogs() {{
@@ -485,10 +552,21 @@ async function refreshLogs() {{
   tbody.insertAdjacentHTML('afterbegin', data.logs.slice().reverse().map(logRowHtml).join(''));
   latestLogId = Math.max(latestLogId, ...data.logs.map(function(row) {{ return row.id; }}));
   refreshVisibleTimes();
+  applyColumnSettings();
+}}
+async function refreshLogStorage() {{
+  try {{
+    const response = await fetch('/logs/storage', {{cache:'no-store'}});
+    const data = await response.json();
+    const node = document.getElementById('log-storage-used');
+    if (node) node.textContent = data.db_display;
+  }} catch (error) {{}}
 }}
 document.addEventListener('DOMContentLoaded', function() {{
   fillTimezoneSelect();
   refreshVisibleTimes();
+  bindColumnControls();
+  applyColumnSettings();
   document.getElementById('timezone-select')?.addEventListener('change', function(event) {{
     localStorage.setItem('tesseraLogTimezone', event.target.value);
     refreshVisibleTimes();
@@ -499,11 +577,12 @@ document.addEventListener('DOMContentLoaded', function() {{
     if (!logsPaused) refreshLogs();
   }});
   setInterval(refreshLogs, 2000);
+  setInterval(refreshLogStorage, 5000);
 }});
 </script>
 <body>
 <div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP port 514.</div></div>{page_nav('Processor Logs')}</div>
-<div class="tzbar"><label for="timezone-select">Display timezone</label><select id="timezone-select"></select></div>
+<div class="statusbar"><div>Storage used by logs: <b id="log-storage-used">{html_escape(storage['db_display'])}</b></div><div class="tzbar"><label for="timezone-select">Display timezone</label><select id="timezone-select"></select></div></div>
 {flash}
 <div class="tabs">{''.join(buttons)}</div>
 <div class="tools">
@@ -522,9 +601,30 @@ document.addEventListener('DOMContentLoaded', function() {{
   </form>
   {clear_form}
   <button id="pause-logs" type="button">Pause Refresh</button>
+  <a href="/logs/manage">Manage Logging</a>
 </div>
-<table><thead><tr><th>Server Time</th><th>Processor</th><th>Type</th><th>Message</th></tr></thead><tbody id="logs-body">
-{''.join(rows) if rows else '<tr id="logs-empty"><td colspan="4" class="sub">No logs received yet.</td></tr>'}
+<div class="column-controls">
+  <span>Columns:</span>
+  <label><input class="column-toggle" data-col="time" type="checkbox" checked>Server Time</label>
+  <label><input class="column-toggle" data-col="processor" type="checkbox" checked>Processor</label>
+  <label><input class="column-toggle" data-col="ip" type="checkbox" checked>IP Address</label>
+  <label><input class="column-toggle" data-col="type" type="checkbox" checked>Type</label>
+  <label><input class="column-toggle" data-col="message" type="checkbox" checked>Message</label>
+</div>
+<table><colgroup>
+  <col class="col-time" data-col="time" style="width:210px">
+  <col class="col-processor" data-col="processor" style="width:220px">
+  <col class="col-ip" data-col="ip" style="width:140px">
+  <col class="col-type" data-col="type" style="width:90px">
+  <col class="col-message" data-col="message" style="width:700px">
+</colgroup><thead><tr>
+  <th class="col-time">Server Time<span class="resize-handle" data-col="time"></span></th>
+  <th class="col-processor">Processor<span class="resize-handle" data-col="processor"></span></th>
+  <th class="col-ip">IP Address<span class="resize-handle" data-col="ip"></span></th>
+  <th class="col-type">Type<span class="resize-handle" data-col="type"></span></th>
+  <th class="col-message">Message<span class="resize-handle" data-col="message"></span></th>
+</tr></thead><tbody id="logs-body">
+{''.join(rows) if rows else '<tr id="logs-empty"><td colspan="5" class="sub">No logs received yet.</td></tr>'}
 </tbody></table>
 </body></html>"""
     return HTMLResponse(html)
@@ -535,6 +635,10 @@ async def logs_data(ip: str = '', q: str = '', limit: int = 500, after_id: int =
     selected_ip = ip if ip in known_ips else ''
     logs = list_logs(selected_ip, limit, q, after_id, ascending=True)
     return JSONResponse({'logs': logs})
+
+@app.get('/logs/storage')
+async def logs_storage():
+    return JSONResponse(log_storage_summary())
 
 @app.get('/logs/export')
 async def logs_export(minutes: int = 60, ip: str = ''):
@@ -552,6 +656,106 @@ async def logs_clear(request: Request):
     from urllib.parse import urlencode
     qs = urlencode({'ip': ip, 'msg': f'Cleared logs for {ip}.'}) if ip else ''
     return RedirectResponse('/logs' + (('?' + qs) if qs else ''), status_code=303)
+
+@app.get('/logs/manage', response_class=HTMLResponse)
+async def logs_manage(msg: str = '', level: str = 'info'):
+    summary = log_storage_summary()
+    rows = []
+    for processor in summary['processors']:
+        ip = html_escape(processor['ip'])
+        name = html_escape(processor['name'] or processor['ip'])
+        paused = bool(processor['paused'])
+        ignored = bool(processor['ignored'])
+        pause_label = 'Resume Collection' if paused else 'Pause Collection'
+        ignore_label = 'Un-ignore Processor' if ignored else 'Ignore Processor'
+        pause_value = '0' if paused else '1'
+        ignore_value = '0' if ignored else '1'
+        rows.append(f"""
+        <tr>
+          <td><b>{name}</b><div class="desc">{ip}</div></td>
+          <td>{int(processor['log_count'])}</td>
+          <td>{int(processor['buffered_count'])}</td>
+          <td>{html_escape(processor['estimated_display'])}</td>
+          <td>{processor['messages_per_minute']:.2f}/min</td>
+          <td>{'Paused' if paused else 'Collecting'}{' · Ignored' if ignored else ''}</td>
+          <td class="actions">
+            <form method="post" action="/logs/manage/pause"><input type="hidden" name="ip" value="{ip}"><input type="hidden" name="paused" value="{pause_value}"><button>{pause_label}</button></form>
+            <form method="post" action="/logs/manage/ignore" onsubmit="return confirm('Change ignored state for {ip}?');"><input type="hidden" name="ip" value="{ip}"><input type="hidden" name="ignored" value="{ignore_value}"><button class="danger">{ignore_label}</button></form>
+            <form method="post" action="/logs/manage/delete" onsubmit="return confirm('Delete stored logs for {ip}?');"><input type="hidden" name="ip" value="{ip}"><button class="danger">Delete Logs</button></form>
+          </td>
+        </tr>""")
+    flash = f'<div class="flash {html_escape(level)}">{html_escape(msg)}</div>' if msg else ''
+    html = f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>Manage Processor Logs - {APP_NAME}</title>
+<style>
+body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
+h1{{margin:0 0 4px}} .sub,.desc{{color:#aaa}} .desc{{font-size:12px;margin-top:3px}} a{{color:#8cc7ff}}
+{NAV_CSS}
+.top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
+.stats{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}} .stat{{background:#181818;border:1px solid #333;border-radius:8px;padding:12px}} .stat b{{display:block;font-size:22px;margin-top:4px}}
+.tools{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}} .danger{{background:#a43b3b}}
+.flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}} .flash.error{{background:#2b1111;border-color:#933;color:#ffd0d0}}
+table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}} th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{background:#191919}}
+.actions{{display:flex;gap:8px;flex-wrap:wrap}} .actions form{{display:inline}}
+</style></head>
+<body>
+<div class="top"><div><h1>Manage Processor Logs</h1><div class="sub">Storage, collection state, and processor-specific housekeeping.</div></div>{page_nav('Processor Logs')}</div>
+{flash}
+<div class="tools"><a href="/logs">Back to Processor Logs</a>
+  <form method="post" action="/logs/manage/delete" onsubmit="return confirm('Delete all stored processor logs?');"><input type="hidden" name="all" value="1"><button class="danger">Delete All Logs</button></form>
+</div>
+<div class="stats">
+  <div class="stat">Storage used by logs<b>{html_escape(summary['db_display'])}</b></div>
+  <div class="stat">Free server space<b>{html_escape(summary['free_display'])}</b></div>
+  <div class="stat">Server disk size<b>{html_escape(summary['total_display'])}</b></div>
+</div>
+<table><thead><tr><th>Processor</th><th>Stored Logs</th><th>Buffered</th><th>Estimated Storage</th><th>Average Frequency</th><th>Status</th><th>Controls</th></tr></thead><tbody>
+{''.join(rows) if rows else '<tr><td colspan="7" class="sub">No processors have sent logs yet.</td></tr>'}
+</tbody></table>
+</body></html>"""
+    return HTMLResponse(html)
+
+@app.post('/logs/manage/delete')
+async def logs_manage_delete(request: Request):
+    from urllib.parse import urlencode
+    form = await request.form()
+    if str(form.get('all', '')) == '1':
+        clear_all_logs()
+        qs = urlencode({'msg': 'Deleted all stored processor logs.', 'level': 'info'})
+    else:
+        ip = str(form.get('ip', '')).strip()
+        if ip:
+            clear_logs(ip)
+            qs = urlencode({'msg': f'Deleted stored logs for {ip}.', 'level': 'info'})
+        else:
+            qs = urlencode({'msg': 'No processor IP was provided.', 'level': 'error'})
+    return RedirectResponse('/logs/manage?' + qs, status_code=303)
+
+@app.post('/logs/manage/pause')
+async def logs_manage_pause(request: Request):
+    from urllib.parse import urlencode
+    form = await request.form()
+    ip = str(form.get('ip', '')).strip()
+    paused = str(form.get('paused', '0')) == '1'
+    if ip:
+        set_processor_paused(ip, paused)
+        qs = urlencode({'msg': f'{"Paused" if paused else "Resumed"} log collection for {ip}.', 'level': 'info'})
+    else:
+        qs = urlencode({'msg': 'No processor IP was provided.', 'level': 'error'})
+    return RedirectResponse('/logs/manage?' + qs, status_code=303)
+
+@app.post('/logs/manage/ignore')
+async def logs_manage_ignore(request: Request):
+    from urllib.parse import urlencode
+    form = await request.form()
+    ip = str(form.get('ip', '')).strip()
+    ignored = str(form.get('ignored', '0')) == '1'
+    if ip:
+        set_processor_ignored(ip, ignored)
+        qs = urlencode({'msg': f'{"Ignored" if ignored else "Un-ignored"} logs from {ip}.', 'level': 'info'})
+    else:
+        qs = urlencode({'msg': 'No processor IP was provided.', 'level': 'error'})
+    return RedirectResponse('/logs/manage?' + qs, status_code=303)
 
 def topology_card_payload(monitor):
     status = html_escape(monitor.get('last_status') or 'pending')
@@ -618,7 +822,7 @@ async def topology_page(msg: str = '', level: str = 'info'):
     quick_rows = []
     for processor in list_processors():
         ip = str(processor.get('ip') or '')
-        if not ip or ip in monitored_ips:
+        if not ip or ip in monitored_ips or processor.get('ignored'):
             continue
         name = html_escape(processor.get('name') or ip)
         escaped_ip = html_escape(ip)
