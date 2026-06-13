@@ -8,12 +8,36 @@ $IconIco = Join-Path $AssetsDir "sl-icon.ico"
 $VenvDir = Join-Path $Root ".venv-windows"
 $Python = Join-Path $VenvDir "Scripts\python.exe"
 
+function Get-SystemPython {
+    $Candidates = @(
+        @("py", "-3"),
+        @("python"),
+        @("python3")
+    )
+
+    foreach ($Candidate in $Candidates) {
+        $Command = $Candidate[0]
+        if (Get-Command $Command -ErrorAction SilentlyContinue) {
+            return $Candidate
+        }
+    }
+
+    throw "Python 3 was not found. Install Python from https://www.python.org/downloads/windows/ and enable 'Add python.exe to PATH', then open a new PowerShell window and run this script again."
+}
+
 if (!(Test-Path $IconPng)) {
     throw "Missing icon source: $IconPng"
 }
 
 if (!(Test-Path $Python)) {
-    py -3 -m venv $VenvDir
+    $SystemPython = Get-SystemPython
+    $Command = $SystemPython[0]
+    $Arguments = @()
+    if ($SystemPython.Length -gt 1) {
+        $Arguments += $SystemPython[1..($SystemPython.Length - 1)]
+    }
+    $Arguments += @("-m", "venv", $VenvDir)
+    & $Command @Arguments
 }
 
 & $Python -m pip install --upgrade pip
