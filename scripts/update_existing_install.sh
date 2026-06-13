@@ -46,7 +46,7 @@ EOT
 
 cat >/etc/systemd/system/tessera-sim-syslog.service <<EOT
 [Unit]
-Description=Tessera Control and Monitoring Syslog Collector
+Description=Tessera Control and Monitoring UDP Syslog Collector
 After=network-online.target
 Wants=network-online.target
 

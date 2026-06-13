@@ -367,7 +367,7 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
     return HTMLResponse(html)
 
 @app.get('/logs', response_class=HTMLResponse)
-async def processor_logs(ip: str = '', limit: int = 500, msg: str = ''):
+async def processor_logs(ip: str = '', limit: int = 500, q: str = '', msg: str = ''):
     processors = list_processors()
     known_ips = {p['ip'] for p in processors}
     selected_ip = ip if ip in known_ips else ''
@@ -375,20 +375,25 @@ async def processor_logs(ip: str = '', limit: int = 500, msg: str = ''):
         refresh_processor_name(processor['ip'])
     processors = list_processors()
     rows = []
-    for row in list_logs(selected_ip, limit):
+    initial_logs = list_logs(selected_ip, limit, q)
+    for row in initial_logs:
         rows.append(f"""
-        <tr>
-          <td>{html_escape(row['received_at'])}</td>
+        <tr data-log-id="{int(row['id'])}">
+          <td><span class="server-time" data-epoch="{float(row['received_epoch'])}">{html_escape(row['received_at'])}</span></td>
           <td>{html_escape(row['processor_name'])}<div class="desc">{html_escape(row['processor_ip'])}</div></td>
-          <td>{html_escape(row['transport'])}</td>
+          <td>{html_escape(row.get('message_type') or '')}</td>
           <td>{html_escape(row['message'])}</td>
         </tr>""")
-    buttons = ['<a class="tab active" href="/logs">All Processors</a>' if not selected_ip else '<a class="tab" href="/logs">All Processors</a>']
+    from urllib.parse import urlencode
+    base_query = {'q': q} if q else {}
+    buttons = [f'<a class="tab{" active" if not selected_ip else ""}" href="/logs{("?" + urlencode(base_query)) if base_query else ""}">All Processors</a>']
     for processor in processors:
         active = ' active' if processor['ip'] == selected_ip else ''
         label = html_escape(processor['name'] or processor['ip'])
         count = int(processor['log_count'] or 0)
-        buttons.append(f'<a class="tab{active}" href="/logs?ip={html_escape(processor["ip"])}">{label}<span>{count}</span></a>')
+        query = dict(base_query)
+        query['ip'] = processor['ip']
+        buttons.append(f'<a class="tab{active}" href="/logs?{html_escape(urlencode(query))}">{label}<span>{count}</span></a>')
     clear_form = ''
     if selected_ip:
         clear_form = f"""<form method="post" action="/logs/clear" onsubmit="return confirm('Clear logs for this processor?');">
@@ -397,6 +402,8 @@ async def processor_logs(ip: str = '', limit: int = 500, msg: str = ''):
         </form>"""
     flash = f'<div class="flash">{html_escape(msg)}</div>' if msg else ''
     export_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
+    search_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
+    max_id = max((int(row['id']) for row in initial_logs), default=0)
     html = f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Processor Logs - {APP_NAME}</title>
 <style>
@@ -404,19 +411,109 @@ body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;co
 h1{{margin:0 0 4px}} .sub,.desc{{color:#aaa}} .desc{{font-size:12px;margin-top:3px}} a{{color:#8cc7ff}} code{{color:#b8e1ff}}
 {NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
+.tzbar{{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin:-8px 0 14px;color:#aaa;font-size:13px}}
 .tabs{{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}} .tab{{display:inline-flex;gap:8px;align-items:center;border:1px solid #333;background:#181818;color:#eee;text-decoration:none;border-radius:8px;padding:9px 12px}}
 .tab:hover,.tab.active{{border-color:#5797d6;background:#1d1d1d}} .tab span{{color:#aaa;font-size:12px}}
 .tools{{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:16px 0}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
-input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+input,select{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
 .danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}}
 table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
 th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{background:#191919}} td:last-child{{white-space:pre-wrap;word-break:break-word}}
 </style></head>
+<script>
+let latestLogId = {max_id};
+let logsPaused = false;
+const selectedLogIp = {json.dumps(selected_ip)};
+const selectedLogSearch = {json.dumps(q)};
+const selectedLogLimit = {int(max(1, min(int(limit or 500), 5000)))};
+function timezoneList() {{
+  if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone');
+  return ['UTC','America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Europe/London','Europe/Berlin','Asia/Tokyo','Australia/Sydney'];
+}}
+function selectedTimezone() {{
+  return localStorage.getItem('tesseraLogTimezone') || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+}}
+function fillTimezoneSelect() {{
+  const select = document.getElementById('timezone-select');
+  if (!select) return;
+  const zones = timezoneList();
+  const current = selectedTimezone();
+  select.innerHTML = zones.map(function(zone) {{ return `<option value="${{zone}}">${{zone}}</option>`; }}).join('');
+  if (!zones.includes(current)) {{
+    select.insertAdjacentHTML('afterbegin', `<option value="${{current}}">${{current}}</option>`);
+  }}
+  select.value = current;
+}}
+function formatLogTime(epoch) {{
+  const zone = selectedTimezone();
+  const date = new Date(Number(epoch) * 1000);
+  const parts = new Intl.DateTimeFormat('en-US', {{
+    timeZone: zone, year: '2-digit', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false, timeZoneName: 'short'
+  }}).formatToParts(date).reduce(function(acc, part) {{ acc[part.type] = part.value; return acc; }}, {{}});
+  return `${{parts.year}}-${{parts.month}}-${{parts.day}} @ ${{parts.hour}}:${{parts.minute}}:${{parts.second}} ${{parts.timeZoneName || zone}}`;
+}}
+function refreshVisibleTimes() {{
+  document.querySelectorAll('.server-time').forEach(function(el) {{
+    el.textContent = formatLogTime(el.dataset.epoch);
+  }});
+}}
+function escapeHtml(value) {{
+  return String(value ?? '').replace(/[&<>"']/g, function(ch) {{
+    return {{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[ch];
+  }});
+}}
+function logRowHtml(row) {{
+  return `<tr data-log-id="${{row.id}}">
+    <td><span class="server-time" data-epoch="${{row.received_epoch}}">${{formatLogTime(row.received_epoch)}}</span></td>
+    <td>${{escapeHtml(row.processor_name)}}<div class="desc">${{escapeHtml(row.processor_ip)}}</div></td>
+    <td>${{escapeHtml(row.message_type || '')}}</td>
+    <td>${{escapeHtml(row.message)}}</td>
+  </tr>`;
+}}
+async function refreshLogs() {{
+  if (logsPaused) return;
+  const params = new URLSearchParams({{after_id: latestLogId, limit: selectedLogLimit, q: selectedLogSearch}});
+  if (selectedLogIp) params.set('ip', selectedLogIp);
+  const response = await fetch('/logs/data?' + params.toString(), {{cache:'no-store'}});
+  const data = await response.json();
+  if (!data.logs.length) return;
+  const tbody = document.getElementById('logs-body');
+  const empty = document.getElementById('logs-empty');
+  if (empty) empty.remove();
+  tbody.insertAdjacentHTML('afterbegin', data.logs.slice().reverse().map(logRowHtml).join(''));
+  latestLogId = Math.max(latestLogId, ...data.logs.map(function(row) {{ return row.id; }}));
+  refreshVisibleTimes();
+}}
+document.addEventListener('DOMContentLoaded', function() {{
+  fillTimezoneSelect();
+  refreshVisibleTimes();
+  document.getElementById('timezone-select')?.addEventListener('change', function(event) {{
+    localStorage.setItem('tesseraLogTimezone', event.target.value);
+    refreshVisibleTimes();
+  }});
+  document.getElementById('pause-logs')?.addEventListener('click', function() {{
+    logsPaused = !logsPaused;
+    this.textContent = logsPaused ? 'Resume Refresh' : 'Pause Refresh';
+    if (!logsPaused) refreshLogs();
+  }});
+  setInterval(refreshLogs, 2000);
+}});
+</script>
 <body>
-<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP/TCP port 514.</div></div>{page_nav('Processor Logs')}</div>
+<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP port 514.</div></div>{page_nav('Processor Logs')}</div>
+<div class="tzbar"><label for="timezone-select">Display timezone</label><select id="timezone-select"></select></div>
 {flash}
 <div class="tabs">{''.join(buttons)}</div>
 <div class="tools">
+  <form method="get" action="/logs">
+    {search_ip}
+    <label>Search messages</label>
+    <input name="q" value="{html_escape(q)}" placeholder="Message text">
+    <button>Search</button>
+    <a href="/logs{('?ip=' + html_escape(selected_ip)) if selected_ip else ''}">Clear</a>
+  </form>
   <form method="get" action="/logs/export">
     {export_ip}
     <label>Export minutes back from now</label>
@@ -424,12 +521,20 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
     <button>Export CSV</button>
   </form>
   {clear_form}
+  <button id="pause-logs" type="button">Pause Refresh</button>
 </div>
-<table><thead><tr><th>Server Time</th><th>Processor</th><th>Transport</th><th>Message</th></tr></thead><tbody>
-{''.join(rows) if rows else '<tr><td colspan="4" class="sub">No logs received yet.</td></tr>'}
+<table><thead><tr><th>Server Time</th><th>Processor</th><th>Type</th><th>Message</th></tr></thead><tbody id="logs-body">
+{''.join(rows) if rows else '<tr id="logs-empty"><td colspan="4" class="sub">No logs received yet.</td></tr>'}
 </tbody></table>
 </body></html>"""
     return HTMLResponse(html)
+
+@app.get('/logs/data')
+async def logs_data(ip: str = '', q: str = '', limit: int = 500, after_id: int = 0):
+    known_ips = {p['ip'] for p in list_processors()}
+    selected_ip = ip if ip in known_ips else ''
+    logs = list_logs(selected_ip, limit, q, after_id, ascending=True)
+    return JSONResponse({'logs': logs})
 
 @app.get('/logs/export')
 async def logs_export(minutes: int = 60, ip: str = ''):
@@ -493,10 +598,36 @@ def topology_card_payload(monitor):
 def topology_cards_payload():
     return [topology_card_payload(monitor) for monitor in list_monitors()]
 
+def processor_ip_control_enabled(ip: str) -> bool:
+    try:
+        req = urllib.request.Request(
+            f'http://{ip}/api/system/processor-type',
+            headers={'Accept': 'application/json', 'User-Agent': 'tessera-control-and-monitoring'},
+        )
+        with urllib.request.urlopen(req, timeout=1.5) as response:
+            response.read(256)
+        return True
+    except Exception:
+        return False
+
 @app.get('/topology', response_class=HTMLResponse)
 async def topology_page(msg: str = '', level: str = 'info'):
     cards = topology_cards_payload()
     cards_wide = get_cards_wide()
+    monitored_ips = {str(monitor.get('ip')) for monitor in list_monitors()}
+    quick_rows = []
+    for processor in list_processors():
+        ip = str(processor.get('ip') or '')
+        if not ip or ip in monitored_ips:
+            continue
+        name = html_escape(processor.get('name') or ip)
+        escaped_ip = html_escape(ip)
+        if processor_ip_control_enabled(ip):
+            quick_rows.append(f"""<div class="quick-item"><div><b>{name}</b><div class="sub">{escaped_ip}</div></div>
+              <form method="post" action="/topology/quick-add"><input type="hidden" name="ip" value="{escaped_ip}"><button>Quick Add</button></form></div>""")
+        else:
+            quick_rows.append(f'<div class="quick-item"><div class="sub">Processor with IP address {escaped_ip} is sending logs but IP control is not enabled</div></div>')
+    quick_add = f'<section class="panel quick-add"><h2>Quick Add From Logs</h2><div class="quick-list">{"".join(quick_rows)}</div></section>' if quick_rows else ''
     flash = f'<div class="flash {html_escape(level)}">{html_escape(msg)}</div>' if msg else ''
     remaining = max(0, 20 - len(cards))
     html = f"""<!doctype html>
@@ -509,6 +640,7 @@ h1{{margin:0 0 4px}} h2{{margin:0 0 4px;font-size:18px}} .sub{{color:#aaa}} a{{c
 .panel{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}} .monitor-grid{{display:grid;grid-template-columns:repeat(var(--cards-wide),minmax(0,1fr));gap:12px;align-items:start}} .monitor{{background:#191b1b;border:2px solid #9b927f;border-radius:12px;padding:10px;min-width:0;transition:border-color .12s,opacity .12s}}
 .controls{{display:flex;justify-content:space-between;gap:16px;align-items:end;flex-wrap:wrap}} .add,.layout{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} .layout{{margin-left:auto;justify-content:flex-end}}
 label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}} select,input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+.quick-list{{display:flex;gap:10px;flex-wrap:wrap}} .quick-item{{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid #333;background:#151515;border-radius:8px;padding:10px;min-width:260px}}
 .monitor-title{{font-size:clamp(17px,1.35vw,26px);font-weight:800;text-align:center;line-height:1.05;margin:2px 0 4px;overflow-wrap:anywhere}} .monitor-ip{{font-size:clamp(13px,1vw,18px);text-align:center;margin-bottom:8px;color:#eee}}
 .topology-graphic{{background:transparent;border:0;margin:0 0 8px}} .monitor-meta,.monitor-footer{{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-size:clamp(13px,1vw,18px)}} .last-polled{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}} .monitor-footer{{margin-top:8px}}
 .monitor-actions{{display:flex;gap:8px;align-items:center}} .drag-handle{{color:#aaa;border:1px solid #444;border-radius:5px;padding:7px 9px;cursor:grab;user-select:none;font-size:14px}} .dragging{{opacity:.45}} .drag-over{{border-color:#5797d6}}
@@ -612,6 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {{
   </form>
   <div class="sub">{remaining} monitoring slots available.</div>
 </section>
+{quick_add}
 <div id="monitor-grid" class="monitor-grid" style="--cards-wide:{cards_wide}">{''.join(card['html'] for card in cards)}</div>
 <section id="monitor-empty" class="panel" style="display:{'none' if cards else 'block'}"><div class="sub">No processors are being monitored yet.</div></section>
 </body></html>"""
@@ -624,6 +757,18 @@ async def topology_add(request: Request):
     try:
         add_monitor(str(form.get('ip', '')), int(form.get('interval') or 10))
         qs = urlencode({'msg': 'Processor added to topology monitoring.', 'level': 'info'})
+    except Exception as ex:
+        qs = urlencode({'msg': str(ex), 'level': 'error'})
+    return RedirectResponse('/topology?' + qs, status_code=303)
+
+@app.post('/topology/quick-add')
+async def topology_quick_add(request: Request):
+    from urllib.parse import urlencode
+    form = await request.form()
+    ip = str(form.get('ip', '')).strip()
+    try:
+        add_monitor(ip, 10)
+        qs = urlencode({'msg': f'Processor {ip} added to topology monitoring.', 'level': 'info'})
     except Exception as ex:
         qs = urlencode({'msg': str(ex), 'level': 'error'})
     return RedirectResponse('/topology?' + qs, status_code=303)

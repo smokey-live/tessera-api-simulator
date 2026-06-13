@@ -7,6 +7,7 @@ import sqlite3
 import time
 import urllib.request
 from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,7 @@ def now_epoch() -> float:
 
 
 def now_text(ts: float | None = None) -> str:
-    return datetime.fromtimestamp(ts or now_epoch()).astimezone().isoformat(timespec='seconds')
+    return datetime.fromtimestamp(ts or now_epoch(), timezone.utc).isoformat(timespec='seconds')
 
 
 def connect():
@@ -44,10 +45,17 @@ def init_log_db():
                 priority INTEGER,
                 facility INTEGER,
                 severity INTEGER,
+                processor_time TEXT,
+                message_type TEXT,
                 message TEXT NOT NULL,
                 raw_message TEXT NOT NULL
             )
         """)
+        columns = {row['name'] for row in conn.execute("PRAGMA table_info(processor_logs)").fetchall()}
+        if 'processor_time' not in columns:
+            conn.execute("ALTER TABLE processor_logs ADD COLUMN processor_time TEXT")
+        if 'message_type' not in columns:
+            conn.execute("ALTER TABLE processor_logs ADD COLUMN message_type TEXT")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS processors (
                 ip TEXT PRIMARY KEY,
@@ -64,9 +72,26 @@ def parse_syslog_message(raw: str):
     msg = raw.strip('\x00\r\n')
     match = re.match(r'^<(\d{1,3})>(.*)$', msg, re.S)
     if not match:
-        return None, None, None, msg
-    priority = int(match.group(1))
-    return priority, priority // 8, priority % 8, match.group(2).strip()
+        priority = facility = severity = None
+        payload = msg
+    else:
+        priority = int(match.group(1))
+        facility = priority // 8
+        severity = priority % 8
+        payload = match.group(2).strip()
+    processor_time = ''
+    time_match = re.match(r'^([A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(.*)$', payload, re.S)
+    if time_match:
+        processor_time = time_match.group(1)
+        payload = time_match.group(2).strip()
+    message_type = ''
+    type_match = re.match(r'^(tessera|kernel):\s*(.*)$', payload, re.I | re.S)
+    if not type_match:
+        type_match = re.match(r'^\S+\s+(tessera|kernel):\s*(.*)$', payload, re.I | re.S)
+    if type_match:
+        message_type = type_match.group(1).lower()
+        payload = type_match.group(2).strip()
+    return priority, facility, severity, processor_time, message_type, payload
 
 
 def prune_old_logs():
@@ -125,7 +150,7 @@ def refresh_processor_name(ip: str, force: bool = False) -> str:
 
 def record_log(processor_ip: str, transport: str, raw_message: str):
     init_log_db()
-    priority, facility, severity, message = parse_syslog_message(raw_message)
+    priority, facility, severity, processor_time, message_type, message = parse_syslog_message(raw_message)
     ts = now_epoch()
     with connect() as conn:
         conn.execute("""
@@ -136,9 +161,10 @@ def record_log(processor_ip: str, transport: str, raw_message: str):
         conn.execute("""
             INSERT INTO processor_logs (
                 received_epoch, received_at, processor_ip, transport,
-                priority, facility, severity, message, raw_message
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (ts, now_text(ts), processor_ip, transport, priority, facility, severity, message, raw_message.strip('\x00\r\n')))
+                priority, facility, severity, processor_time, message_type,
+                message, raw_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (ts, now_text(ts), processor_ip, transport, priority, facility, severity, processor_time, message_type, message, raw_message.strip('\x00\r\n')))
     if int(ts) % 60 == 0:
         prune_old_logs()
     refresh_processor_name(processor_ip)
@@ -157,22 +183,30 @@ def list_processors():
     return [dict(row) for row in rows]
 
 
-def list_logs(processor_ip: str = '', limit: int = 500):
+def list_logs(processor_ip: str = '', limit: int = 500, search: str = '', after_id: int = 0, ascending: bool = False):
     init_log_db()
     limit = max(1, min(int(limit or 500), 5000))
     params: list[Any] = []
-    where = ''
+    clauses = []
     if processor_ip:
-        where = 'WHERE l.processor_ip = ?'
+        clauses.append('l.processor_ip = ?')
         params.append(processor_ip)
+    if search:
+        clauses.append('l.message LIKE ?')
+        params.append(f'%{search}%')
+    if after_id:
+        clauses.append('l.id > ?')
+        params.append(int(after_id))
+    where = 'WHERE ' + ' AND '.join(clauses) if clauses else ''
     params.append(limit)
+    direction = 'ASC' if ascending else 'DESC'
     with connect() as conn:
         rows = conn.execute(f"""
             SELECT l.*, COALESCE(p.name, l.processor_ip) AS processor_name
             FROM processor_logs l
             LEFT JOIN processors p ON p.ip = l.processor_ip
             {where}
-            ORDER BY l.received_epoch DESC
+            ORDER BY l.id {direction}
             LIMIT ?
         """, params).fetchall()
     return [dict(row) for row in rows]
@@ -196,9 +230,10 @@ def export_logs_csv(minutes_back: int, processor_ip: str = '') -> str:
         params.append(processor_ip)
     with connect() as conn:
         rows = conn.execute(f"""
-            SELECT l.received_at, COALESCE(p.name, l.processor_ip) AS processor_name,
-                   l.processor_ip, l.transport, l.facility, l.severity,
-                   l.message, l.raw_message
+            SELECT l.received_at, l.processor_time,
+                   COALESCE(p.name, l.processor_ip) AS processor_name,
+                   l.processor_ip, l.message_type,
+                   l.facility, l.severity, l.message, l.raw_message
             FROM processor_logs l
             LEFT JOIN processors p ON p.ip = l.processor_ip
             {where}
@@ -206,7 +241,7 @@ def export_logs_csv(minutes_back: int, processor_ip: str = '') -> str:
         """, params).fetchall()
     out = io.StringIO()
     writer = csv.writer(out)
-    writer.writerow(['received_at', 'processor_name', 'processor_ip', 'transport', 'facility', 'severity', 'message', 'raw_message'])
+    writer.writerow(['received_at_utc', 'processor_time', 'processor_name', 'processor_ip', 'type', 'facility', 'severity', 'message', 'raw_message'])
     for row in rows:
         writer.writerow([row[k] for k in row.keys()])
     return out.getvalue()

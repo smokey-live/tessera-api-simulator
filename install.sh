@@ -71,7 +71,7 @@ EOT
 
 cat >/etc/systemd/system/tessera-sim-syslog.service <<EOT
 [Unit]
-Description=Tessera Control and Monitoring Syslog Collector
+Description=Tessera Control and Monitoring UDP Syslog Collector
 After=network-online.target
 Wants=network-online.target
 
@@ -95,4 +95,4 @@ EOT
 systemctl daemon-reload
 systemctl enable --now tessera-sim.service tessera-sim-tcp.service tessera-sim-syslog.service
 
-echo "Installed. Home: http://YOUR_LXC_IP:${PORT}/  API: http://YOUR_LXC_IP:${PORT}/api  God Mode: http://YOUR_LXC_IP:${PORT}/god  TCP: port ${TCPPORT}  Syslog: UDP/TCP ${SYSLOGPORT}"
+echo "Installed. Home: http://YOUR_LXC_IP:${PORT}/  API: http://YOUR_LXC_IP:${PORT}/api  God Mode: http://YOUR_LXC_IP:${PORT}/god  TCP: port ${TCPPORT}  Syslog: UDP ${SYSLOGPORT}"

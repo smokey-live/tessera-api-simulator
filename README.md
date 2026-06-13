@@ -144,9 +144,9 @@ journalctl -u tessera-sim-syslog.service -f
 
 ## Processor Logs
 
-Configure Tessera processors to send syslog to the server IP. The collector listens on both UDP and TCP port `514` and records which transport received each message.
+Configure Tessera processors to send syslog to the server IP. The collector listens on UDP port `514`.
 
-Log entries are timestamped with the local server receive time because processor clocks are often wrong. The collector stores the sender IP and refreshes the processor display name from `http://PROCESSOR_IP/api/system/processor-name` every 10 minutes.
+Log entries are stored with UTC server receive time because processor clocks are often wrong. The web interface formats that time in the viewer's selected time zone. The original processor timestamp is stored separately but not shown. The collector stores the sender IP and refreshes the processor display name from `http://PROCESSOR_IP/api/system/processor-name` every 10 minutes.
 
 The `/logs` page shows received logs by processor, can export CSV for a chosen number of minutes back from the present, and can clear logs for an individual processor. Logs older than 7 days are pruned automatically.
 

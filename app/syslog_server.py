@@ -15,24 +15,6 @@ class SyslogUDPProtocol(asyncio.DatagramProtocol):
         asyncio.create_task(asyncio.to_thread(record_log, addr[0], 'UDP', message))
 
 
-async def handle_tcp(reader, writer):
-    peer = writer.get_extra_info('peername')
-    ip = peer[0] if peer else 'unknown'
-    try:
-        while True:
-            data = await reader.read(4096)
-            if not data:
-                break
-            lines = data.splitlines() or [data]
-            for line in lines:
-                if line:
-                    message = line.decode('utf-8', errors='replace')
-                    await asyncio.to_thread(record_log, ip, 'TCP', message)
-    finally:
-        writer.close()
-        await writer.wait_closed()
-
-
 async def prune_loop():
     while True:
         await asyncio.to_thread(prune_old_logs)
@@ -46,12 +28,10 @@ async def main():
         SyslogUDPProtocol,
         local_addr=(HOST, PORT),
     )
-    tcp_server = await asyncio.start_server(handle_tcp, HOST, PORT)
     asyncio.create_task(prune_loop())
-    print(f'Tessera syslog collector listening on UDP/TCP {PORT}', flush=True)
+    print(f'Tessera syslog collector listening on UDP {PORT}', flush=True)
     try:
-        async with tcp_server:
-            await tcp_server.serve_forever()
+        await asyncio.Future()
     finally:
         udp_transport.close()
 

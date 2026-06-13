@@ -13,6 +13,7 @@ sys.path.insert(0, str(APP_DIR))
 from fastapi.testclient import TestClient  # noqa: E402
 import tessera_sim  # noqa: E402
 import topology_monitor  # noqa: E402
+from log_store import parse_syslog_message  # noqa: E402
 
 
 class TesseraSimulatorSmokeTests(unittest.TestCase):
@@ -48,7 +49,19 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["content-type"], "text/csv; charset=utf-8")
-        self.assertIn("received_at,processor_name,processor_ip,transport", response.text)
+        self.assertIn("received_at_utc,processor_time,processor_name,processor_ip,type", response.text)
+
+    def test_syslog_message_parser_strips_processor_time_and_type(self):
+        priority, facility, severity, processor_time, message_type, message = parse_syslog_message(
+            "<13>Jun 12 21:59:46 tessera: Source Auth: requests authentication"
+        )
+
+        self.assertEqual(priority, 13)
+        self.assertEqual(facility, 1)
+        self.assertEqual(severity, 5)
+        self.assertEqual(processor_time, "Jun 12 21:59:46")
+        self.assertEqual(message_type, "tessera")
+        self.assertEqual(message, "Source Auth: requests authentication")
 
     def test_topology_page_loads_without_monitors(self):
         response = self.client.get("/topology")
