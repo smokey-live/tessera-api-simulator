@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, HTMLResponse, RedirectResponse
 from log_store import clear_logs, export_logs_csv, list_logs, list_processors, refresh_processor_name
-from topology_monitor import add_monitor, list_monitors, poll_due_monitors, remove_monitor, reorder_monitors, topology_svg
+from topology_monitor import add_monitor, get_cards_wide, list_monitors, poll_due_monitors, remove_monitor, reorder_monitors, set_cards_wide, topology_svg
 
 BASE = Path(os.environ.get('TESSERA_SIM_BASE','/var/lib/tessera-sim'))
 APPDIR = Path(__file__).resolve().parent
@@ -451,8 +451,8 @@ async def logs_clear(request: Request):
 def topology_card_payload(monitor):
     status = html_escape(monitor.get('last_status') or 'pending')
     error = html_escape(monitor.get('last_error') or '')
-    last = html_escape(monitor.get('last_poll_at') or 'not polled yet')
-    processor_type = html_escape(monitor.get('processor_type') or 'unknown')
+    last = str(monitor.get('last_poll_at') or 'not polled yet')
+    last_time = last.split('T', 1)[1][:8] if 'T' in last else last
     monitor_id = html_escape(monitor.get('id'))
     svg = topology_svg(monitor)
     signature_src = json.dumps({
@@ -467,22 +467,28 @@ def topology_card_payload(monitor):
         'last_error': monitor.get('last_error'),
     }, sort_keys=True)
     signature = hashlib.sha256(signature_src.encode('utf-8')).hexdigest()
+    last_polled_text = f'Last Polled: {html_escape(last_time)}'
     html = f"""
         <section class="monitor" draggable="true" data-id="{monitor_id}" data-signature="{signature}">
-          <div class="monitor-head">
-            <div><h2>{html_escape(monitor.get('name') or monitor.get('ip'))}</h2><div class="sub">{html_escape(monitor.get('ip'))} · {processor_type} · every {int(monitor.get('interval') or 10)}s · last poll {last}</div></div>
-            <div class="monitor-actions">
+          <div class="monitor-title">{html_escape(monitor.get('name') or monitor.get('ip'))}</div>
+          <div class="monitor-ip">{html_escape(monitor.get('ip'))}</div>
+          <div class="topology-graphic">{svg}</div>
+          <div class="monitor-meta">
+            <span>every {int(monitor.get('interval') or 10)}s</span>
+            <span class="last-polled">{last_polled_text}</span>
+          </div>
+          <div class="monitor-footer">
+            <span>Status: {status}{(' · ' + error) if error else ''}</span>
+            <span class="monitor-actions">
               <span class="drag-handle" title="Drag to reorder">Drag</span>
               <form method="post" action="/topology/remove" onsubmit="return confirm('Remove this processor from topology monitoring?');">
                 <input type="hidden" name="id" value="{monitor_id}">
                 <button class="danger">Remove</button>
               </form>
-            </div>
+            </span>
           </div>
-          <div class="sub">Status: {status}{(' · ' + error) if error else ''}</div>
-          {svg}
         </section>"""
-    return {'id': monitor.get('id'), 'signature': signature, 'html': html}
+    return {'id': monitor.get('id'), 'signature': signature, 'last_polled': last_polled_text, 'html': html}
 
 def topology_cards_payload():
     return [topology_card_payload(monitor) for monitor in list_monitors()]
@@ -490,6 +496,7 @@ def topology_cards_payload():
 @app.get('/topology', response_class=HTMLResponse)
 async def topology_page(msg: str = '', level: str = 'info'):
     cards = topology_cards_payload()
+    cards_wide = get_cards_wide()
     flash = f'<div class="flash {html_escape(level)}">{html_escape(msg)}</div>' if msg else ''
     remaining = max(0, 20 - len(cards))
     html = f"""<!doctype html>
@@ -499,17 +506,19 @@ body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;co
 h1{{margin:0 0 4px}} h2{{margin:0 0 4px;font-size:18px}} .sub{{color:#aaa}} a{{color:#8cc7ff}}
 {NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
-.panel{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}} .monitor-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px;align-items:start}} .monitor{{background:#181818;border:1px solid #333;border-radius:8px;padding:10px;min-width:0;transition:border-color .12s,opacity .12s}}
-.monitor-head{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}}
-.monitor-actions{{display:flex;gap:8px;align-items:center}} .drag-handle{{color:#aaa;border:1px solid #444;border-radius:5px;padding:7px 9px;cursor:grab;user-select:none}} .dragging{{opacity:.45}} .drag-over{{border-color:#5797d6}}
-.add{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
-input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+.panel{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}} .monitor-grid{{display:grid;grid-template-columns:repeat(var(--cards-wide),minmax(0,1fr));gap:12px;align-items:start}} .monitor{{background:#191b1b;border:2px solid #9b927f;border-radius:12px;padding:10px;min-width:0;transition:border-color .12s,opacity .12s}}
+.controls{{display:flex;justify-content:space-between;gap:16px;align-items:end;flex-wrap:wrap}} .add,.layout{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} .layout{{margin-left:auto;justify-content:flex-end}}
+label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}} select,input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+.monitor-title{{font-size:clamp(17px,1.35vw,26px);font-weight:800;text-align:center;line-height:1.05;margin:2px 0 4px;overflow-wrap:anywhere}} .monitor-ip{{font-size:clamp(13px,1vw,18px);text-align:center;margin-bottom:8px;color:#eee}}
+.topology-graphic{{background:#000;border:6px solid #050505;margin:0 0 8px}} .monitor-meta,.monitor-footer{{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-size:clamp(13px,1vw,18px)}} .last-polled{{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}} .monitor-footer{{margin-top:8px}}
+.monitor-actions{{display:flex;gap:8px;align-items:center}} .drag-handle{{color:#aaa;border:1px solid #444;border-radius:5px;padding:7px 9px;cursor:grab;user-select:none;font-size:14px}} .dragging{{opacity:.45}} .drag-over{{border-color:#5797d6}}
 .danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}} .flash.error{{background:#2b1111;border-color:#933;color:#ffd0d0}}
-.topology-svg{{display:block;width:100%;margin:8px auto 0;background:#000;border-radius:4px}}
+.topology-svg{{display:block;width:100%;margin:0 auto;background:#000}}
 .topology-svg text{{fill:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:20px}} .topology-svg .title{{font-size:22px}}
 .topology-svg .frame,.topology-svg .port-row{{fill:none;stroke:#fff;stroke-width:1.5}} .topology-svg .port-row{{stroke-width:1}}
 .topology-svg .arrow{{stroke-width:2.2;fill:none}} .topology-svg .arrow.ok{{stroke:#00ff30}} .topology-svg .arrow.bad{{stroke:#ff2828}}
 .topology-svg .unsupported{{fill:#ffcc66;font-size:16px}}
+@media (max-width: 1100px){{.monitor-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}}} @media (max-width: 680px){{.monitor-grid{{grid-template-columns:1fr}}}}
 </style></head>
 <script>
 let topologyDragging = null;
@@ -570,6 +579,11 @@ async function refreshTopologyCards() {{
       const node = existing.get(card.id);
       if (node && node.dataset.signature !== card.signature) {{
         node.outerHTML = card.html;
+      }} else if (node) {{
+        const lastPolled = node.querySelector('.last-polled');
+        if (lastPolled && card.last_polled && lastPolled.textContent !== card.last_polled) {{
+          lastPolled.textContent = card.last_polled;
+        }}
       }}
     }});
     if (empty) empty.style.display = data.cards.length ? 'none' : '';
@@ -584,15 +598,21 @@ document.addEventListener('DOMContentLoaded', function() {{
 <body>
 <div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div>{page_nav('Topology Monitoring')}</div>
 {flash}
-<section class="panel">
+<section class="panel controls">
   <form class="add" method="post" action="/topology/add">
     <div><label>Processor IP address</label><input name="ip" placeholder="192.168.0.101" required></div>
     <div><label>Polling frequency seconds</label><input name="interval" type="number" min="1" value="10"></div>
     <button {'disabled' if remaining == 0 else ''}>Add Processor</button>
   </form>
+  <form class="layout" method="post" action="/topology/layout">
+    <div><label>Cards wide</label><select name="cards_wide" onchange="this.form.submit()">
+      {''.join(f'<option value="{n}" {"selected" if n == cards_wide else ""}>{n}</option>' for n in range(1, 9))}
+    </select></div>
+    <noscript><button>Apply</button></noscript>
+  </form>
   <div class="sub">{remaining} monitoring slots available.</div>
 </section>
-<div id="monitor-grid" class="monitor-grid">{''.join(card['html'] for card in cards)}</div>
+<div id="monitor-grid" class="monitor-grid" style="--cards-wide:{cards_wide}">{''.join(card['html'] for card in cards)}</div>
 <section id="monitor-empty" class="panel" style="display:{'none' if cards else 'block'}"><div class="sub">No processors are being monitored yet.</div></section>
 </body></html>"""
     return HTMLResponse(html)
@@ -607,6 +627,12 @@ async def topology_add(request: Request):
     except Exception as ex:
         qs = urlencode({'msg': str(ex), 'level': 'error'})
     return RedirectResponse('/topology?' + qs, status_code=303)
+
+@app.post('/topology/layout')
+async def topology_layout(request: Request):
+    form = await request.form()
+    set_cards_wide(form.get('cards_wide', 4))
+    return RedirectResponse('/topology', status_code=303)
 
 @app.get('/topology/data')
 async def topology_data():

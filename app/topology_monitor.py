@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import threading
 import time
 import urllib.request
 import uuid
@@ -14,6 +15,8 @@ TOPOLOGY_FILE = BASE / 'topology_monitors.json'
 MAX_MONITORS = 20
 DEFAULT_INTERVAL = 10
 SUPPORTED_TYPE = 'sx40'
+DEFAULT_CARDS_WIDE = 4
+CONFIG_LOCK = threading.RLock()
 
 
 def now_epoch() -> float:
@@ -39,15 +42,24 @@ def normalize_ip(ip: str) -> str:
 def load_config():
     BASE.mkdir(parents=True, exist_ok=True)
     if not TOPOLOGY_FILE.exists():
-        return {'monitors': []}
+        return {'monitors': [], 'cards_wide': DEFAULT_CARDS_WIDE}
     try:
         with TOPOLOGY_FILE.open('r', encoding='utf-8') as handle:
             data = json.load(handle)
         if isinstance(data, dict) and isinstance(data.get('monitors'), list):
+            data['cards_wide'] = clamp_cards_wide(data.get('cards_wide', DEFAULT_CARDS_WIDE))
             return data
     except Exception:
         pass
-    return {'monitors': []}
+    return {'monitors': [], 'cards_wide': DEFAULT_CARDS_WIDE}
+
+
+def clamp_cards_wide(value) -> int:
+    try:
+        value = int(value)
+    except Exception:
+        value = DEFAULT_CARDS_WIDE
+    return max(1, min(value, 8))
 
 
 def save_config(config):
@@ -59,7 +71,20 @@ def save_config(config):
 
 
 def list_monitors():
-    return load_config().get('monitors', [])
+    with CONFIG_LOCK:
+        return list(load_config().get('monitors', []))
+
+
+def get_cards_wide() -> int:
+    with CONFIG_LOCK:
+        return clamp_cards_wide(load_config().get('cards_wide', DEFAULT_CARDS_WIDE))
+
+
+def set_cards_wide(value):
+    with CONFIG_LOCK:
+        config = load_config()
+        config['cards_wide'] = clamp_cards_wide(value)
+        save_config(config)
 
 
 def add_monitor(ip: str, interval: int = DEFAULT_INTERVAL):
@@ -67,49 +92,58 @@ def add_monitor(ip: str, interval: int = DEFAULT_INTERVAL):
     if not ip:
         raise ValueError('Missing processor IP address')
     interval = max(1, int(interval or DEFAULT_INTERVAL))
-    config = load_config()
-    monitors = config.setdefault('monitors', [])
-    for monitor in monitors:
-        if monitor.get('ip') == ip:
-            monitor['interval'] = interval
+    with CONFIG_LOCK:
+        config = load_config()
+        monitors = config.setdefault('monitors', [])
+        for monitor in monitors:
+            if monitor.get('ip') == ip:
+                monitor['interval'] = interval
+                monitor_id = monitor['id']
+                save_config(config)
+                break
+        else:
+            if len(monitors) >= MAX_MONITORS:
+                raise ValueError(f'Maximum of {MAX_MONITORS} processors can be monitored')
+            monitor = {
+                'id': uuid.uuid4().hex[:12],
+                'ip': ip,
+                'interval': interval,
+                'name': ip,
+                'processor_type': '',
+                'loop1_state': '',
+                'loop2_state': '',
+                'last_poll_epoch': 0,
+                'last_poll_at': '',
+                'last_status': 'pending',
+                'last_error': '',
+            }
+            monitors.append(monitor)
+            monitor_id = monitor['id']
             save_config(config)
-            update_monitor(monitor['id'])
-            return monitor
-    if len(monitors) >= MAX_MONITORS:
-        raise ValueError(f'Maximum of {MAX_MONITORS} processors can be monitored')
-    monitor = {
-        'id': uuid.uuid4().hex[:12],
-        'ip': ip,
-        'interval': interval,
-        'name': ip,
-        'processor_type': '',
-        'loop1_state': '',
-        'loop2_state': '',
-        'last_poll_epoch': 0,
-        'last_poll_at': '',
-        'last_status': 'pending',
-        'last_error': '',
-    }
-    monitors.append(monitor)
-    save_config(config)
-    update_monitor(monitor['id'])
-    return monitor
+    update_monitor(monitor_id)
+    with CONFIG_LOCK:
+        for monitor in load_config().get('monitors', []):
+            if monitor.get('id') == monitor_id:
+                return monitor
+    return {'id': monitor_id, 'ip': ip, 'interval': interval}
 
 
 def remove_monitor(monitor_id: str):
-    config = load_config()
-    config['monitors'] = [m for m in config.get('monitors', []) if m.get('id') != monitor_id]
-    save_config(config)
+    with CONFIG_LOCK:
+        config = load_config()
+        config['monitors'] = [m for m in config.get('monitors', []) if m.get('id') != monitor_id]
+        save_config(config)
 
 
 def reorder_monitors(monitor_ids):
-    config = load_config()
-    monitors = config.get('monitors', [])
-    by_id = {m.get('id'): m for m in monitors}
-    ordered = [by_id[mid] for mid in monitor_ids if mid in by_id]
-    ordered.extend([m for m in monitors if m.get('id') not in monitor_ids])
-    config['monitors'] = ordered
-    save_config(config)
+    with CONFIG_LOCK:
+        config = load_config()
+        monitors = config.get('monitors', [])
+        by_id = {m.get('id'): m for m in monitors}
+        ordered = [by_id[mid] for mid in monitor_ids if mid in by_id]
+        ordered.extend([m for m in monitors if m.get('id') not in monitor_ids])
+        config['monitors'] = ordered
+        save_config(config)
 
 
 def fetch_endpoint(ip: str, path: str, timeout: float = 4.0):
@@ -129,45 +163,49 @@ def fetch_endpoint(ip: str, path: str, timeout: float = 4.0):
 
 
 def update_monitor(monitor_id: str):
-    config = load_config()
-    changed = False
-    for monitor in config.get('monitors', []):
-        if monitor.get('id') != monitor_id:
-            continue
-        ts = now_epoch()
-        try:
-            ip = monitor['ip']
-            name = fetch_endpoint(ip, '/api/system/processor-name')
-            processor_type = fetch_endpoint(ip, '/api/system/processor-type')
-            monitor['name'] = str(name or ip)
-            monitor['processor_type'] = str(processor_type or '').lower()
-            if monitor['processor_type'] == SUPPORTED_TYPE:
-                monitor['loop1_state'] = fetch_endpoint(ip, '/api/output/network/cable-redundancy/loops/1/state') or ''
-                monitor['loop2_state'] = fetch_endpoint(ip, '/api/output/network/cable-redundancy/loops/2/state') or ''
-            else:
-                monitor['loop1_state'] = ''
-                monitor['loop2_state'] = ''
-            monitor['last_status'] = 'ok'
-            monitor['last_error'] = ''
-        except Exception as ex:
-            monitor['last_status'] = 'error'
-            monitor['last_error'] = str(ex)
-        monitor['last_poll_epoch'] = ts
-        monitor['last_poll_at'] = now_text(ts)
-        changed = True
-        break
-    if changed:
-        save_config(config)
+    with CONFIG_LOCK:
+        current = next((m.copy() for m in load_config().get('monitors', []) if m.get('id') == monitor_id), None)
+    if not current:
+        return
+    ts = now_epoch()
+    updates = {}
+    try:
+        ip = current['ip']
+        name = fetch_endpoint(ip, '/api/system/processor-name')
+        processor_type = fetch_endpoint(ip, '/api/system/processor-type')
+        updates['name'] = str(name or ip)
+        updates['processor_type'] = str(processor_type or '').lower()
+        if updates['processor_type'] == SUPPORTED_TYPE:
+            updates['loop1_state'] = fetch_endpoint(ip, '/api/output/network/cable-redundancy/loops/1/state') or ''
+            updates['loop2_state'] = fetch_endpoint(ip, '/api/output/network/cable-redundancy/loops/2/state') or ''
+        else:
+            updates['loop1_state'] = ''
+            updates['loop2_state'] = ''
+        updates['last_status'] = 'ok'
+        updates['last_error'] = ''
+    except Exception as ex:
+        updates['last_status'] = 'error'
+        updates['last_error'] = str(ex)
+    updates['last_poll_epoch'] = ts
+    updates['last_poll_at'] = now_text(ts)
+    with CONFIG_LOCK:
+        config = load_config()
+        for monitor in config.get('monitors', []):
+            if monitor.get('id') == monitor_id:
+                monitor.update(updates)
+                save_config(config)
+                break
 
 
 def poll_due_monitors():
-    config = load_config()
-    due = []
-    current = now_epoch()
-    for monitor in config.get('monitors', []):
-        interval = max(1, int(monitor.get('interval') or DEFAULT_INTERVAL))
-        if current - float(monitor.get('last_poll_epoch') or 0) >= interval:
-            due.append(monitor.get('id'))
+    with CONFIG_LOCK:
+        config = load_config()
+        due = []
+        current = now_epoch()
+        for monitor in config.get('monitors', []):
+            interval = max(1, int(monitor.get('interval') or DEFAULT_INTERVAL))
+            if current - float(monitor.get('last_poll_epoch') or 0) >= interval:
+                due.append(monitor.get('id'))
     for monitor_id in due:
         update_monitor(monitor_id)
 
@@ -216,9 +254,9 @@ def topology_svg(monitor):
     loop2 = parse_loop_state(monitor.get('loop2_state'))
     show_cd = bool(loop2)
     view_w = 640
-    view_h = 492 if show_cd else 292
+    view_h = 400 if show_cd else 218
     frame_h = view_h - 24
-    rows = {'A': 78, 'B': 176, 'C': 286, 'D': 384} if show_cd else {'A': 78, 'B': 176}
+    rows = {'A': 42, 'B': 122, 'C': 218, 'D': 298} if show_cd else {'A': 42, 'B': 122}
     x0 = 68
     gap = 54
     row_box_x = 36
@@ -274,7 +312,6 @@ def topology_svg(monitor):
   <marker id="{bad_marker}" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7 Z" fill="#ff2828"/></marker>
 </defs>
 <rect class="frame" x="12" y="12" width="{view_w - 24}" height="{frame_h}"/>
-<text class="title" x="{view_w / 2}" y="48" text-anchor="middle">{name}</text>
 {''.join(row_markup)}
 {''.join(arrows)}
 {status}
