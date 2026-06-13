@@ -290,13 +290,15 @@ def topology_svg(monitor):
                 end_x = x_for(end)
                 y1 = rows[start_letter] + row_box_h
                 y2 = rows[end[0]]
-                marker = f'marker-start="url(#{ok_marker})" marker-end="url(#{ok_marker})"' if good else f'marker-end="url(#{bad_marker})"'
+                marker_id = ok_marker if good else bad_marker
+                marker = f'marker-start="url(#{marker_id})" marker-end="url(#{marker_id})"'
                 arrows.append(f'<line class="arrow {css}" x1="{start_x}" y1="{y1}" x2="{end_x}" y2="{y2}" {marker}/>')
             else:
                 y1 = rows[start_letter] + row_box_h
                 direction = 48 if start_letter in ('A', 'C') else -48
                 y2 = y1 + direction
-                marker = f'marker-start="url(#{ok_marker})" marker-end="url(#{ok_marker})"' if good else f'marker-end="url(#{bad_marker})"'
+                marker_id = ok_marker if good else bad_marker
+                marker = f'marker-start="url(#{marker_id})" marker-end="url(#{marker_id})"'
                 arrows.append(f'<line class="arrow {css}" x1="{start_x}" y1="{y1}" x2="{start_x}" y2="{y2}" {marker}/>')
 
     status = ''
