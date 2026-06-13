@@ -8,11 +8,14 @@ Runtime data lives in `/var/lib/tessera-sim`:
 - `files/` - uploaded bytearray/file endpoint content
 - `presets/` - saved preset JSON snapshots with name and notes
 - `live_read.json` - Live Read status/configuration
+- `processor_logs.db` - SQLite store for processor syslog messages and cached processor names
 
 Application files live in `/opt/tessera-sim`:
 
 - `tessera_sim.py` - HTTP API, God Mode UI, presets, file upload, Live Read
 - `tcp_server.py` - telnet-style TCP command server
+- `syslog_server.py` - UDP/TCP syslog collector for processor logs
+- `log_store.py` - SQLite storage, retention and processor-name caching for logs
 - `endpoints.json` - endpoint metadata, access specifiers, ranges and datatypes
 - `default_state.json` - seeded processor-style default state
 
@@ -33,3 +36,9 @@ Saving a preset snapshots the current state except locked generated values. Reca
 ## Live Read Real Processor
 
 Live Read is a safety buffer for API-client development. The simulator polls a real Tessera processor, replaces its own active API state with that data, and your client talks only to the simulator. Writes from the client never reach the real processor and are overwritten again on the next successful Live Read poll.
+
+## Processor Logs
+
+The syslog collector listens on UDP and TCP port 514. Incoming messages are stored with the server receive time, sender IP address and transport because processor clocks may be wrong and different processors may send logs to the same collector.
+
+Processor names are cached from `/api/system/processor-name` on each sender IP and refreshed every 10 minutes. Logs older than 7 days are deleted by the collector.

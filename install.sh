@@ -5,6 +5,7 @@ APP=/opt/tessera-sim
 DATA=/var/lib/tessera-sim
 PORT=${PORT:-80}
 TCPPORT=${TCPPORT:-23}
+SYSLOGPORT=${SYSLOGPORT:-514}
 USER_NAME=tessera-sim
 
 apt update
@@ -66,7 +67,30 @@ RestartSec=2
 WantedBy=multi-user.target
 EOT
 
-systemctl daemon-reload
-systemctl enable --now tessera-sim.service tessera-sim-tcp.service
+cat >/etc/systemd/system/tessera-sim-syslog.service <<EOT
+[Unit]
+Description=Tessera Control and Monitoring Syslog Collector
+After=network-online.target
+Wants=network-online.target
 
-echo "Installed. Home: http://YOUR_LXC_IP:${PORT}/  API: http://YOUR_LXC_IP:${PORT}/api  God Mode: http://YOUR_LXC_IP:${PORT}/god  TCP: port ${TCPPORT}"
+[Service]
+Type=simple
+User=$USER_NAME
+Group=$USER_NAME
+Environment=TESSERA_SIM_BASE=$DATA
+Environment=TESSERA_SYSLOG_PORT=$SYSLOGPORT
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+WorkingDirectory=$APP
+ExecStart=$APP/venv/bin/python $APP/syslog_server.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+EOT
+
+systemctl daemon-reload
+systemctl enable --now tessera-sim.service tessera-sim-tcp.service tessera-sim-syslog.service
+
+echo "Installed. Home: http://YOUR_LXC_IP:${PORT}/  API: http://YOUR_LXC_IP:${PORT}/api  God Mode: http://YOUR_LXC_IP:${PORT}/god  TCP: port ${TCPPORT}  Syslog: UDP/TCP ${SYSLOGPORT}"

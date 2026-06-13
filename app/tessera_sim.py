@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, HTMLResponse, RedirectResponse
+from log_store import clear_logs, export_logs_csv, list_logs, list_processors, refresh_processor_name
 
 BASE = Path(os.environ.get('TESSERA_SIM_BASE','/var/lib/tessera-sim'))
 APPDIR = Path(__file__).resolve().parent
@@ -300,6 +301,7 @@ a{{color:#8cc7ff}}
 <div class="actions">
   <a class="action" href="/api-contents"><b>View API Contents</b><span>Browse the simulator's current API state as a searchable table.</span></a>
   <a class="action" href="/god"><b>God Mode</b><span>Edit API endpoints directly to simulate different processor states.</span></a>
+  <a class="action" href="/logs"><b>Processor Logs</b><span>View syslog messages received from Tessera processors.</span></a>
 </div>
 <div class="meta">Raw API data is still available at <a href="/api/">/api/</a>.</div>
 </main></body></html>""")
@@ -344,6 +346,87 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
 </tbody></table>
 </body></html>"""
     return HTMLResponse(html)
+
+@app.get('/logs', response_class=HTMLResponse)
+async def processor_logs(ip: str = '', limit: int = 500, msg: str = ''):
+    processors = list_processors()
+    known_ips = {p['ip'] for p in processors}
+    selected_ip = ip if ip in known_ips else ''
+    for processor in processors:
+        refresh_processor_name(processor['ip'])
+    processors = list_processors()
+    rows = []
+    for row in list_logs(selected_ip, limit):
+        rows.append(f"""
+        <tr>
+          <td>{html_escape(row['received_at'])}</td>
+          <td>{html_escape(row['processor_name'])}<div class="desc">{html_escape(row['processor_ip'])}</div></td>
+          <td>{html_escape(row['transport'])}</td>
+          <td>{html_escape(row['message'])}</td>
+        </tr>""")
+    buttons = ['<a class="tab active" href="/logs">All Processors</a>' if not selected_ip else '<a class="tab" href="/logs">All Processors</a>']
+    for processor in processors:
+        active = ' active' if processor['ip'] == selected_ip else ''
+        label = html_escape(processor['name'] or processor['ip'])
+        count = int(processor['log_count'] or 0)
+        buttons.append(f'<a class="tab{active}" href="/logs?ip={html_escape(processor["ip"])}">{label}<span>{count}</span></a>')
+    clear_form = ''
+    if selected_ip:
+        clear_form = f"""<form method="post" action="/logs/clear" onsubmit="return confirm('Clear logs for this processor?');">
+          <input type="hidden" name="ip" value="{html_escape(selected_ip)}">
+          <button class="danger">Clear This Processor</button>
+        </form>"""
+    flash = f'<div class="flash">{html_escape(msg)}</div>' if msg else ''
+    export_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
+    html = f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>Processor Logs - {APP_NAME}</title>
+<style>
+body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;color:#eee;margin:0;padding:24px}}
+h1{{margin:0 0 4px}} .sub,.desc{{color:#aaa}} .desc{{font-size:12px;margin-top:3px}} a{{color:#8cc7ff}} code{{color:#b8e1ff}}
+.top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
+.tabs{{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}} .tab{{display:inline-flex;gap:8px;align-items:center;border:1px solid #333;background:#181818;color:#eee;text-decoration:none;border-radius:8px;padding:9px 12px}}
+.tab:hover,.tab.active{{border-color:#5797d6;background:#1d1d1d}} .tab span{{color:#aaa;font-size:12px}}
+.tools{{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:16px 0}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
+input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:7px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
+.danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}}
+table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;top:0;background:#202020;text-align:left;z-index:2}}
+th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{background:#191919}} td:last-child{{white-space:pre-wrap;word-break:break-word}}
+</style></head>
+<body>
+<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP/TCP port 514.</div></div><div><a href="/">Home</a> · <a href="/api-contents">API Contents</a> · <a href="/god">God Mode</a></div></div>
+{flash}
+<div class="tabs">{''.join(buttons)}</div>
+<div class="tools">
+  <form method="get" action="/logs/export">
+    {export_ip}
+    <label>Export minutes back from now</label>
+    <input name="minutes" type="number" min="1" max="10080" value="60">
+    <button>Export CSV</button>
+  </form>
+  {clear_form}
+</div>
+<table><thead><tr><th>Server Time</th><th>Processor</th><th>Transport</th><th>Message</th></tr></thead><tbody>
+{''.join(rows) if rows else '<tr><td colspan="4" class="sub">No logs received yet.</td></tr>'}
+</tbody></table>
+</body></html>"""
+    return HTMLResponse(html)
+
+@app.get('/logs/export')
+async def logs_export(minutes: int = 60, ip: str = ''):
+    csv_text = export_logs_csv(minutes, ip)
+    suffix = ip.replace('.', '-') if ip else 'all'
+    headers = {'Content-Disposition': f'attachment; filename="processor-logs-{suffix}-{minutes}m.csv"'}
+    return Response(csv_text, media_type='text/csv', headers=headers)
+
+@app.post('/logs/clear')
+async def logs_clear(request: Request):
+    form = await request.form()
+    ip = str(form.get('ip', '')).strip()
+    if ip:
+        clear_logs(ip)
+    from urllib.parse import urlencode
+    qs = urlencode({'ip': ip, 'msg': f'Cleared logs for {ip}.'}) if ip else ''
+    return RedirectResponse('/logs' + (('?' + qs) if qs else ''), status_code=303)
 
 async def handle_tcp(reader, writer):
     writer.write(b'Tessera Control and Monitoring ready. Commands: get/set/list/help <path> [value]\n'); await writer.drain()

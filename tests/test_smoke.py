@@ -25,6 +25,7 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertIn("Tessera Control and Monitoring", response.text)
         self.assertIn('href="/api-contents"', response.text)
         self.assertIn('href="/god"', response.text)
+        self.assertIn('href="/logs"', response.text)
 
     def test_api_contents_page_shows_current_state(self):
         response = self.client.get("/api-contents")
@@ -32,6 +33,20 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("/api/system/processor-type", response.text)
         self.assertIn("sx40", response.text)
+
+    def test_processor_logs_page_loads_without_logs(self):
+        response = self.client.get("/logs")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Processor Logs", response.text)
+        self.assertIn("No logs received yet.", response.text)
+
+    def test_processor_logs_export_returns_csv(self):
+        response = self.client.get("/logs/export?minutes=60")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["content-type"], "text/csv; charset=utf-8")
+        self.assertIn("received_at,processor_name,processor_ip,transport", response.text)
 
     def test_api_root_returns_default_tree(self):
         response = self.client.get("/api")

@@ -10,6 +10,8 @@ This project was built around the Tessera IP Control API 3.5.2 behavior and a re
 - Telnet-style TCP command service
 - Home page at `/` for choosing the current tool
 - API contents browser at `/api-contents`
+- Processor syslog collection on UDP/TCP port `514`
+- Processor log viewer at `/logs` with CSV export and per-processor clearing
 - Persistent writable API state
 - Endpoint validation for known datatypes, ranges and access rules
 - Read-only enforcement for normal API clients
@@ -39,6 +41,7 @@ Default ports:
 
 - HTTP API, Home and God Mode: `80`
 - TCP command socket: `23`
+- Syslog collector: UDP/TCP `514`
 
 Override ports during install:
 
@@ -122,7 +125,9 @@ This is designed so your development client can read live processor data from th
 ```bash
 systemctl status tessera-sim.service
 systemctl status tessera-sim-tcp.service
+systemctl status tessera-sim-syslog.service
 journalctl -u tessera-sim.service -f
+journalctl -u tessera-sim-syslog.service -f
 ```
 
 ## Runtime paths
@@ -130,9 +135,18 @@ journalctl -u tessera-sim.service -f
 ```text
 /opt/tessera-sim              installed application
 /var/lib/tessera-sim/state.json
+/var/lib/tessera-sim/processor_logs.db
 /var/lib/tessera-sim/files
 /var/lib/tessera-sim/presets
 ```
+
+## Processor Logs
+
+Configure Tessera processors to send syslog to the server IP. The collector listens on both UDP and TCP port `514` and records which transport received each message.
+
+Log entries are timestamped with the local server receive time because processor clocks are often wrong. The collector stores the sender IP and refreshes the processor display name from `http://PROCESSOR_IP/api/system/processor-name` every 10 minutes.
+
+The `/logs` page shows received logs by processor, can export CSV for a chosen number of minutes back from the present, and can clear logs for an individual processor. Logs older than 7 days are pruned automatically.
 
 ## Notes
 
