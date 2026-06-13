@@ -66,6 +66,18 @@ def init_log_db():
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_processor_logs_ip_epoch ON processor_logs(processor_ip, received_epoch)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_processor_logs_epoch ON processor_logs(received_epoch)")
+        rows = conn.execute("""
+            SELECT id, raw_message
+            FROM processor_logs
+            WHERE processor_time IS NULL OR message_type IS NULL
+        """).fetchall()
+        for row in rows:
+            _, _, _, processor_time, message_type, message = parse_syslog_message(row['raw_message'] or '')
+            conn.execute("""
+                UPDATE processor_logs
+                SET processor_time = ?, message_type = ?, message = ?
+                WHERE id = ?
+            """, (processor_time, message_type, message, row['id']))
 
 
 def parse_syslog_message(raw: str):
