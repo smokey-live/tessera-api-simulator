@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import asyncio, base64, json, os, re, time, socket, uuid, urllib.request, urllib.error
+import asyncio, base64, hashlib, json, os, re, time, socket, uuid, urllib.request, urllib.error
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, HTMLResponse, RedirectResponse
 from log_store import clear_logs, export_logs_csv, list_logs, list_processors, refresh_processor_name
-from topology_monitor import add_monitor, list_monitors, poll_due_monitors, remove_monitor, topology_svg
+from topology_monitor import add_monitor, list_monitors, poll_due_monitors, remove_monitor, reorder_monitors, topology_svg
 
 BASE = Path(os.environ.get('TESSERA_SIM_BASE','/var/lib/tessera-sim'))
 APPDIR = Path(__file__).resolve().parent
@@ -448,29 +448,50 @@ async def logs_clear(request: Request):
     qs = urlencode({'ip': ip, 'msg': f'Cleared logs for {ip}.'}) if ip else ''
     return RedirectResponse('/logs' + (('?' + qs) if qs else ''), status_code=303)
 
-@app.get('/topology', response_class=HTMLResponse)
-async def topology_page(msg: str = '', level: str = 'info'):
-    monitors = list_monitors()
-    cards = []
-    for monitor in monitors:
-        status = html_escape(monitor.get('last_status') or 'pending')
-        error = html_escape(monitor.get('last_error') or '')
-        last = html_escape(monitor.get('last_poll_at') or 'not polled yet')
-        processor_type = html_escape(monitor.get('processor_type') or 'unknown')
-        cards.append(f"""
-        <section class="monitor">
+def topology_card_payload(monitor):
+    status = html_escape(monitor.get('last_status') or 'pending')
+    error = html_escape(monitor.get('last_error') or '')
+    last = html_escape(monitor.get('last_poll_at') or 'not polled yet')
+    processor_type = html_escape(monitor.get('processor_type') or 'unknown')
+    monitor_id = html_escape(monitor.get('id'))
+    svg = topology_svg(monitor)
+    signature_src = json.dumps({
+        'id': monitor.get('id'),
+        'name': monitor.get('name'),
+        'ip': monitor.get('ip'),
+        'interval': monitor.get('interval'),
+        'processor_type': monitor.get('processor_type'),
+        'loop1_state': monitor.get('loop1_state'),
+        'loop2_state': monitor.get('loop2_state'),
+        'last_status': monitor.get('last_status'),
+        'last_error': monitor.get('last_error'),
+    }, sort_keys=True)
+    signature = hashlib.sha256(signature_src.encode('utf-8')).hexdigest()
+    html = f"""
+        <section class="monitor" draggable="true" data-id="{monitor_id}" data-signature="{signature}">
           <div class="monitor-head">
             <div><h2>{html_escape(monitor.get('name') or monitor.get('ip'))}</h2><div class="sub">{html_escape(monitor.get('ip'))} · {processor_type} · every {int(monitor.get('interval') or 10)}s · last poll {last}</div></div>
-            <form method="post" action="/topology/remove" onsubmit="return confirm('Remove this processor from topology monitoring?');">
-              <input type="hidden" name="id" value="{html_escape(monitor.get('id'))}">
-              <button class="danger">Remove</button>
-            </form>
+            <div class="monitor-actions">
+              <span class="drag-handle" title="Drag to reorder">Drag</span>
+              <form method="post" action="/topology/remove" onsubmit="return confirm('Remove this processor from topology monitoring?');">
+                <input type="hidden" name="id" value="{monitor_id}">
+                <button class="danger">Remove</button>
+              </form>
+            </div>
           </div>
           <div class="sub">Status: {status}{(' · ' + error) if error else ''}</div>
-          {topology_svg(monitor)}
-        </section>""")
+          {svg}
+        </section>"""
+    return {'id': monitor.get('id'), 'signature': signature, 'html': html}
+
+def topology_cards_payload():
+    return [topology_card_payload(monitor) for monitor in list_monitors()]
+
+@app.get('/topology', response_class=HTMLResponse)
+async def topology_page(msg: str = '', level: str = 'info'):
+    cards = topology_cards_payload()
     flash = f'<div class="flash {html_escape(level)}">{html_escape(msg)}</div>' if msg else ''
-    remaining = max(0, 20 - len(monitors))
+    remaining = max(0, 20 - len(cards))
     html = f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Topology Monitoring - {APP_NAME}</title>
 <style>
@@ -478,8 +499,9 @@ body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111;co
 h1{{margin:0 0 4px}} h2{{margin:0 0 4px;font-size:18px}} .sub{{color:#aaa}} a{{color:#8cc7ff}}
 {NAV_CSS}
 .top{{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}}
-.panel{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}} .monitor-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px;align-items:start}} .monitor{{background:#181818;border:1px solid #333;border-radius:8px;padding:10px;min-width:0}}
+.panel{{background:#181818;border:1px solid #333;border-radius:8px;padding:14px;margin:14px 0}} .monitor-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px;align-items:start}} .monitor{{background:#181818;border:1px solid #333;border-radius:8px;padding:10px;min-width:0;transition:border-color .12s,opacity .12s}}
 .monitor-head{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}}
+.monitor-actions{{display:flex;gap:8px;align-items:center}} .drag-handle{{color:#aaa;border:1px solid #444;border-radius:5px;padding:7px 9px;cursor:grab;user-select:none}} .dragging{{opacity:.45}} .drag-over{{border-color:#5797d6}}
 .add{{display:flex;gap:10px;align-items:end;flex-wrap:wrap}} label{{display:block;color:#aaa;font-size:12px;margin-bottom:4px}}
 input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;padding:8px}} button{{background:#2f74c0;color:#fff;border:0;border-radius:5px;padding:8px 12px;cursor:pointer}}
 .danger{{background:#a43b3b}} .flash{{background:#0d2a16;border:1px solid #2f8b4b;padding:10px;border-radius:6px;margin:12px 0;color:#baffc9}} .flash.error{{background:#2b1111;border-color:#933;color:#ffd0d0}}
@@ -490,11 +512,74 @@ input{{background:#1d1d1d;color:#fff;border:1px solid #555;border-radius:5px;pad
 .topology-svg .unsupported{{fill:#ffcc66;font-size:16px}}
 </style></head>
 <script>
-setInterval(function(){{
-  var active = document.activeElement;
-  var editing = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
-  if (!editing) window.location.reload();
-}}, 5000);
+let topologyDragging = null;
+function bindTopologyDrag() {{
+  document.querySelectorAll('.monitor').forEach(function(card) {{
+    if (card.dataset.dragBound === '1') return;
+    card.dataset.dragBound = '1';
+    card.addEventListener('dragstart', function(event) {{
+      topologyDragging = card;
+      card.classList.add('dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', card.dataset.id);
+    }});
+    card.addEventListener('dragend', function() {{
+      card.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(function(el) {{ el.classList.remove('drag-over'); }});
+      topologyDragging = null;
+      saveTopologyOrder();
+    }});
+    card.addEventListener('dragover', function(event) {{
+      event.preventDefault();
+      if (!topologyDragging || topologyDragging === card) return;
+      card.classList.add('drag-over');
+      const grid = document.getElementById('monitor-grid');
+      const rect = card.getBoundingClientRect();
+      const before = event.clientY < rect.top + rect.height / 2;
+      grid.insertBefore(topologyDragging, before ? card : card.nextSibling);
+    }});
+    card.addEventListener('dragleave', function() {{ card.classList.remove('drag-over'); }});
+    card.addEventListener('drop', function(event) {{
+      event.preventDefault();
+      card.classList.remove('drag-over');
+    }});
+  }});
+}}
+function saveTopologyOrder() {{
+  const ids = Array.from(document.querySelectorAll('#monitor-grid .monitor')).map(function(card) {{ return card.dataset.id; }});
+  fetch('/topology/reorder', {{method:'POST', headers:{{'Content-Type':'application/json'}}, body:JSON.stringify({{ids: ids}})}}).catch(function() {{}});
+}}
+async function refreshTopologyCards() {{
+  if (topologyDragging) return;
+  try {{
+    const response = await fetch('/topology/data', {{cache:'no-store'}});
+    const data = await response.json();
+    const grid = document.getElementById('monitor-grid');
+    const empty = document.getElementById('monitor-empty');
+    if (!grid) return;
+    const existing = new Map(Array.from(grid.querySelectorAll('.monitor')).map(function(card) {{ return [card.dataset.id, card]; }}));
+    const existingIds = Array.from(existing.keys()).join(',');
+    const incomingIds = data.cards.map(function(card) {{ return card.id; }}).join(',');
+    if (existingIds !== incomingIds) {{
+      grid.innerHTML = data.cards.map(function(card) {{ return card.html; }}).join('');
+      if (empty) empty.style.display = data.cards.length ? 'none' : '';
+      bindTopologyDrag();
+      return;
+    }}
+    data.cards.forEach(function(card) {{
+      const node = existing.get(card.id);
+      if (node && node.dataset.signature !== card.signature) {{
+        node.outerHTML = card.html;
+      }}
+    }});
+    if (empty) empty.style.display = data.cards.length ? 'none' : '';
+    bindTopologyDrag();
+  }} catch (error) {{}}
+}}
+document.addEventListener('DOMContentLoaded', function() {{
+  bindTopologyDrag();
+  setInterval(refreshTopologyCards, 5000);
+}});
 </script>
 <body>
 <div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div>{page_nav('Topology Monitoring')}</div>
@@ -507,7 +592,8 @@ setInterval(function(){{
   </form>
   <div class="sub">{remaining} monitoring slots available.</div>
 </section>
-{('<div class="monitor-grid">' + ''.join(cards) + '</div>') if cards else '<section class="panel"><div class="sub">No processors are being monitored yet.</div></section>'}
+<div id="monitor-grid" class="monitor-grid">{''.join(card['html'] for card in cards)}</div>
+<section id="monitor-empty" class="panel" style="display:{'none' if cards else 'block'}"><div class="sub">No processors are being monitored yet.</div></section>
 </body></html>"""
     return HTMLResponse(html)
 
@@ -521,6 +607,21 @@ async def topology_add(request: Request):
     except Exception as ex:
         qs = urlencode({'msg': str(ex), 'level': 'error'})
     return RedirectResponse('/topology?' + qs, status_code=303)
+
+@app.get('/topology/data')
+async def topology_data():
+    return JSONResponse({'cards': topology_cards_payload()})
+
+@app.post('/topology/reorder')
+async def topology_reorder(request: Request):
+    try:
+        body = await request.json()
+        ids = body.get('ids', []) if isinstance(body, dict) else []
+        if isinstance(ids, list):
+            reorder_monitors([str(mid) for mid in ids])
+    except Exception:
+        pass
+    return JSONResponse({'ok': True})
 
 @app.post('/topology/remove')
 async def topology_remove(request: Request):

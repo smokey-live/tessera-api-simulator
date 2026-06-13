@@ -102,6 +102,16 @@ def remove_monitor(monitor_id: str):
     save_config(config)
 
 
+def reorder_monitors(monitor_ids):
+    config = load_config()
+    monitors = config.get('monitors', [])
+    by_id = {m.get('id'): m for m in monitors}
+    ordered = [by_id[mid] for mid in monitor_ids if mid in by_id]
+    ordered.extend([m for m in monitors if m.get('id') not in monitor_ids])
+    config['monitors'] = ordered
+    save_config(config)
+
+
 def fetch_endpoint(ip: str, path: str, timeout: float = 4.0):
     req = urllib.request.Request(
         f'http://{ip}{path}',
