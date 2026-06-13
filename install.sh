@@ -35,6 +35,8 @@ User=$USER_NAME
 Group=$USER_NAME
 Environment=TESSERA_SIM_BASE=$DATA
 Environment=PORT=$PORT
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 WorkingDirectory=$APP
 ExecStart=$APP/venv/bin/python $APP/tessera_sim.py
 Restart=always
