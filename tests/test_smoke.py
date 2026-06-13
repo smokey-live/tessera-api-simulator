@@ -13,12 +13,18 @@ sys.path.insert(0, str(APP_DIR))
 from fastapi.testclient import TestClient  # noqa: E402
 import tessera_sim  # noqa: E402
 import topology_monitor  # noqa: E402
+import log_store  # noqa: E402
 from log_store import list_logs, record_log, set_processor_ignored, set_processor_paused, parse_syslog_message  # noqa: E402
 
 
 class TesseraSimulatorSmokeTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(tessera_sim.app)
+        log_store.init_log_db()
+        with log_store.connect() as conn:
+            conn.execute("DELETE FROM processor_logs")
+            conn.execute("DELETE FROM paused_log_buffer")
+            conn.execute("DELETE FROM processors")
 
     def test_home_page_links_to_main_tools(self):
         response = self.client.get("/")
