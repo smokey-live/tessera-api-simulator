@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+.venv-windows/
 venv/
 .env
 .DS_Store
@@ -8,3 +9,6 @@ venv/
 state.json
 files/
 presets/
+build/
+dist/
+*.spec.log

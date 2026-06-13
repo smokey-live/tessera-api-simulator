@@ -1,0 +1,29 @@
+$ErrorActionPreference = "Stop"
+
+$Root = Resolve-Path (Join-Path $PSScriptRoot "..")
+$WindowsDir = Join-Path $Root "packaging\windows"
+$AssetsDir = Join-Path $WindowsDir "assets"
+$IconPng = Join-Path $AssetsDir "sl-icon.png"
+$IconIco = Join-Path $AssetsDir "sl-icon.ico"
+$VenvDir = Join-Path $Root ".venv-windows"
+$Python = Join-Path $VenvDir "Scripts\python.exe"
+
+if (!(Test-Path $IconPng)) {
+    throw "Missing icon source: $IconPng"
+}
+
+if (!(Test-Path $Python)) {
+    py -3 -m venv $VenvDir
+}
+
+& $Python -m pip install --upgrade pip
+& $Python -m pip install -r (Join-Path $WindowsDir "requirements-windows.txt")
+
+& $Python -c "from PIL import Image; img=Image.open(r'$IconPng'); img.save(r'$IconIco', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+& $Python -m PyInstaller --clean --noconfirm (Join-Path $WindowsDir "TesseraMonitoringAndControl.spec")
+
+Write-Host ""
+Write-Host "Built Windows executable:"
+Write-Host (Join-Path $Root "dist\TesseraMonitoringAndControl.exe")
+Write-Host ""
+Write-Host "Run as Administrator if Windows blocks binding to TCP 23 or UDP 514."
