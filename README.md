@@ -100,6 +100,7 @@ http://127.0.0.1:8080/god
 Run the smoke tests:
 
 ```bash
+pip install -r requirements-dev.txt
 python -m unittest discover -s tests
 ```
 
