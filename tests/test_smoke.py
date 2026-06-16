@@ -76,6 +76,18 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertEqual(message_type, "tessera")
         self.assertEqual(message, "Source Auth: requests authentication")
 
+    def test_processor_logs_can_filter_by_severity(self):
+        record_log("127.0.0.1", "UDP", "<132>Jun 12 21:59:46 tessera: warning row")
+        record_log("127.0.0.1", "UDP", "<135>Jun 12 21:59:47 tessera: debug row")
+
+        response = self.client.get("/logs?severity=4")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Severity", response.text)
+        self.assertIn("4 Warning", response.text)
+        self.assertIn("warning row", response.text)
+        self.assertNotIn("debug row", response.text)
+
     def test_paused_and_ignored_log_collection(self):
         record_log("192.0.2.50", "UDP", "<13>Jun 12 21:59:46 tessera: before pause")
         set_processor_paused("192.0.2.50", True)

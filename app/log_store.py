@@ -231,7 +231,7 @@ def list_processors():
     return [dict(row) for row in rows]
 
 
-def list_logs(processor_ip: str = '', limit: int = 500, search: str = '', after_id: int = 0, ascending: bool = False):
+def list_logs(processor_ip: str = '', limit: int = 500, search: str = '', after_id: int = 0, ascending: bool = False, severity: str = ''):
     init_log_db()
     limit = max(1, min(int(limit or 500), 5000))
     params: list[Any] = []
@@ -239,6 +239,12 @@ def list_logs(processor_ip: str = '', limit: int = 500, search: str = '', after_
     if processor_ip:
         clauses.append('l.processor_ip = ?')
         params.append(processor_ip)
+    if severity != '':
+        if str(severity) not in {str(i) for i in range(8)}:
+            severity = ''
+    if severity != '':
+        clauses.append('l.severity = ?')
+        params.append(int(severity))
     if search:
         clauses.append('l.message LIKE ?')
         params.append(f'%{search}%')

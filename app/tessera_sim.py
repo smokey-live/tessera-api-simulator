@@ -22,6 +22,23 @@ APP_NAME = 'Tessera Control and Monitoring'
 app = FastAPI(title=APP_NAME, version='3.5.2')
 
 NAV_CSS = ".nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.nav a{color:#8cc7ff;text-decoration:none}.nav a:hover{text-decoration:underline}.nav .active{color:#fff;font-weight:700}"
+SYSLOG_SEVERITY_LABELS = {
+    '0': 'Emergency',
+    '1': 'Alert',
+    '2': 'Critical',
+    '3': 'Error',
+    '4': 'Warning',
+    '5': 'Notice',
+    '6': 'Informational',
+    '7': 'Debug',
+}
+
+def severity_display(value: Any) -> str:
+    if value is None or value == '':
+        return ''
+    key = str(value)
+    label = SYSLOG_SEVERITY_LABELS.get(key, '')
+    return f'{key} {label}'.strip()
 
 def page_nav(active: str = '') -> str:
     items = [
@@ -367,26 +384,33 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
     return HTMLResponse(html)
 
 @app.get('/logs', response_class=HTMLResponse)
-async def processor_logs(ip: str = '', limit: int = 500, q: str = '', msg: str = ''):
+async def processor_logs(ip: str = '', limit: int = 500, q: str = '', severity: str = '', msg: str = ''):
     processors = list_processors()
     known_ips = {p['ip'] for p in processors}
     selected_ip = ip if ip in known_ips else ''
+    selected_severity = severity if severity in SYSLOG_SEVERITY_LABELS else ''
     for processor in processors:
         refresh_processor_name(processor['ip'])
     processors = list_processors()
     rows = []
-    initial_logs = list_logs(selected_ip, limit, q)
+    initial_logs = list_logs(selected_ip, limit, q, severity=selected_severity)
     for row in initial_logs:
+        severity_label = severity_display(row.get('severity'))
         rows.append(f"""
         <tr data-log-id="{int(row['id'])}">
           <td class="col-time"><span class="server-time" data-epoch="{float(row['received_epoch'])}">{html_escape(row['received_at'])}</span></td>
           <td class="col-processor">{html_escape(row['processor_name'])}</td>
           <td class="col-ip">{html_escape(row['processor_ip'])}</td>
           <td class="col-type">{html_escape(row.get('message_type') or '')}</td>
+          <td class="col-severity">{html_escape(severity_label)}</td>
           <td class="col-message">{html_escape(row['message'])}</td>
         </tr>""")
     from urllib.parse import urlencode
-    base_query = {'q': q} if q else {}
+    base_query = {}
+    if q:
+        base_query['q'] = q
+    if selected_severity:
+        base_query['severity'] = selected_severity
     buttons = [f'<a class="tab{" active" if not selected_ip else ""}" href="/logs{("?" + urlencode(base_query)) if base_query else ""}">All Processors</a>']
     for processor in processors:
         active = ' active' if processor['ip'] == selected_ip else ''
@@ -406,6 +430,10 @@ async def processor_logs(ip: str = '', limit: int = 500, q: str = '', msg: str =
     flash = f'<div class="flash">{html_escape(msg)}</div>' if msg else ''
     export_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
     search_ip = f'<input type="hidden" name="ip" value="{html_escape(selected_ip)}">' if selected_ip else ''
+    severity_options = ['<option value="">All severities</option>']
+    for value, label in SYSLOG_SEVERITY_LABELS.items():
+        selected = ' selected' if value == selected_severity else ''
+        severity_options.append(f'<option value="{value}"{selected}>{value} {html_escape(label)}</option>')
     max_id = max((int(row['id']) for row in initial_logs), default=0)
     storage = log_storage_summary()
     html = f"""<!doctype html>
@@ -432,9 +460,10 @@ let latestLogId = {max_id};
 let logsPaused = false;
 const selectedLogIp = {json.dumps(selected_ip)};
 const selectedLogSearch = {json.dumps(q)};
+const selectedLogSeverity = {json.dumps(selected_severity)};
 const selectedLogLimit = {int(max(1, min(int(limit or 500), 5000)))};
-const logColumns = ['time', 'processor', 'ip', 'type', 'message'];
-const defaultColumnWidths = {{time: 210, processor: 220, ip: 140, type: 90, message: 700}};
+const logColumns = ['time', 'processor', 'ip', 'type', 'severity', 'message'];
+const defaultColumnWidths = {{time: 210, processor: 220, ip: 140, type: 90, severity: 120, message: 700}};
 function timezoneList() {{
   if (Intl.supportedValuesOf) return Intl.supportedValuesOf('timeZone');
   return ['UTC','America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Europe/London','Europe/Berlin','Asia/Tokyo','Australia/Sydney'];
@@ -531,18 +560,24 @@ function escapeHtml(value) {{
   }});
 }}
 function logRowHtml(row) {{
+  const severity = row.severity === null || row.severity === undefined || row.severity === '' ? '' : `${{row.severity}} ${{severityLabel(row.severity)}}`;
   return `<tr data-log-id="${{row.id}}">
     <td class="col-time"><span class="server-time" data-epoch="${{row.received_epoch}}">${{formatLogTime(row.received_epoch)}}</span></td>
     <td class="col-processor">${{escapeHtml(row.processor_name)}}</td>
     <td class="col-ip">${{escapeHtml(row.processor_ip)}}</td>
     <td class="col-type">${{escapeHtml(row.message_type || '')}}</td>
+    <td class="col-severity">${{escapeHtml(severity)}}</td>
     <td class="col-message">${{escapeHtml(row.message)}}</td>
   </tr>`;
+}}
+function severityLabel(value) {{
+  return {{0:'Emergency',1:'Alert',2:'Critical',3:'Error',4:'Warning',5:'Notice',6:'Informational',7:'Debug'}}[String(value)] || '';
 }}
 async function refreshLogs() {{
   if (logsPaused) return;
   const params = new URLSearchParams({{after_id: latestLogId, limit: selectedLogLimit, q: selectedLogSearch}});
   if (selectedLogIp) params.set('ip', selectedLogIp);
+  if (selectedLogSeverity) params.set('severity', selectedLogSeverity);
   const response = await fetch('/logs/data?' + params.toString(), {{cache:'no-store'}});
   const data = await response.json();
   if (!data.logs.length) return;
@@ -590,6 +625,8 @@ document.addEventListener('DOMContentLoaded', function() {{
     {search_ip}
     <label>Search messages</label>
     <input name="q" value="{html_escape(q)}" placeholder="Message text">
+    <label>Severity</label>
+    <select name="severity">{''.join(severity_options)}</select>
     <button>Search</button>
     <a href="/logs{('?ip=' + html_escape(selected_ip)) if selected_ip else ''}">Clear</a>
   </form>
@@ -609,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {{
   <label><input class="column-toggle" data-col="processor" type="checkbox" checked>Processor</label>
   <label><input class="column-toggle" data-col="ip" type="checkbox" checked>IP Address</label>
   <label><input class="column-toggle" data-col="type" type="checkbox" checked>Type</label>
+  <label><input class="column-toggle" data-col="severity" type="checkbox" checked>Severity</label>
   <label><input class="column-toggle" data-col="message" type="checkbox" checked>Message</label>
 </div>
 <table><colgroup>
@@ -616,24 +654,27 @@ document.addEventListener('DOMContentLoaded', function() {{
   <col class="col-processor" data-col="processor" style="width:220px">
   <col class="col-ip" data-col="ip" style="width:140px">
   <col class="col-type" data-col="type" style="width:90px">
+  <col class="col-severity" data-col="severity" style="width:120px">
   <col class="col-message" data-col="message" style="width:700px">
 </colgroup><thead><tr>
   <th class="col-time">Server Time<span class="resize-handle" data-col="time"></span></th>
   <th class="col-processor">Processor<span class="resize-handle" data-col="processor"></span></th>
   <th class="col-ip">IP Address<span class="resize-handle" data-col="ip"></span></th>
   <th class="col-type">Type<span class="resize-handle" data-col="type"></span></th>
+  <th class="col-severity">Severity<span class="resize-handle" data-col="severity"></span></th>
   <th class="col-message">Message<span class="resize-handle" data-col="message"></span></th>
 </tr></thead><tbody id="logs-body">
-{''.join(rows) if rows else '<tr id="logs-empty"><td colspan="5" class="sub">No logs received yet.</td></tr>'}
+{''.join(rows) if rows else '<tr id="logs-empty"><td colspan="6" class="sub">No logs received yet.</td></tr>'}
 </tbody></table>
 </body></html>"""
     return HTMLResponse(html)
 
 @app.get('/logs/data')
-async def logs_data(ip: str = '', q: str = '', limit: int = 500, after_id: int = 0):
+async def logs_data(ip: str = '', q: str = '', severity: str = '', limit: int = 500, after_id: int = 0):
     known_ips = {p['ip'] for p in list_processors()}
     selected_ip = ip if ip in known_ips else ''
-    logs = list_logs(selected_ip, limit, q, after_id, ascending=True)
+    selected_severity = severity if severity in SYSLOG_SEVERITY_LABELS else ''
+    logs = list_logs(selected_ip, limit, q, after_id, ascending=True, severity=selected_severity)
     return JSONResponse({'logs': logs})
 
 @app.get('/logs/storage')
