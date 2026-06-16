@@ -213,11 +213,6 @@ def record_log(processor_ip: str, transport: str, raw_message: str):
     if int(ts) % 60 == 0:
         prune_old_logs()
     refresh_processor_name(processor_ip)
-    try:
-        from processor_discovery import remember_passive_processor
-        remember_passive_processor(processor_ip, source='syslog')
-    except Exception:
-        pass
 
 
 def list_processors():
