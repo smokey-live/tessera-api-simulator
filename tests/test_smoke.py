@@ -26,6 +26,8 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
             conn.execute("DELETE FROM processor_logs")
             conn.execute("DELETE FROM paused_log_buffer")
             conn.execute("DELETE FROM processors")
+        with processor_discovery.DISCOVERY_LOCK:
+            processor_discovery.DISCOVERED.clear()
 
     def test_home_page_links_to_main_tools(self):
         response = self.client.get("/")
@@ -128,6 +130,19 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
 
         self.assertEqual(attrs["project"], "DATABRICKS EXPO - LOUNGE 4 (.104).ffb")
         self.assertEqual(attrs["username"], "P4 - V. LOUNGE - 4")
+
+    def test_passive_discovery_adds_likely_processor_without_slp(self):
+        original_check_api = processor_discovery.check_api
+        processor_discovery.check_api = lambda ip, timeout=0.8: (False, "unavailable")
+        try:
+            processor_discovery.remember_passive_processor("192.0.2.61", source="syslog")
+            response = self.client.get("/")
+        finally:
+            processor_discovery.check_api = original_check_api
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("192.0.2.61", response.text)
+        self.assertIn("Please enable IP control", response.text)
 
     def test_paused_and_ignored_log_collection(self):
         record_log("192.0.2.50", "UDP", "<13>Jun 12 21:59:46 tessera: before pause")

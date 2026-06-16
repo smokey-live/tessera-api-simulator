@@ -347,9 +347,14 @@ async def godmode_home():
 def home_page(admin: bool = False):
     ensure_discovery_running()
     monitors = {monitor.get('ip') for monitor in list_monitors()}
+    ignored_ips = {str(processor.get('ip')) for processor in list_processors() if processor.get('ignored')}
     discovered_rows = []
+    discovered_ips = set()
     for processor in list_discovered_processors():
         ip = processor.get('ip', '')
+        if ip in ignored_ips:
+            continue
+        discovered_ips.add(ip)
         project = processor.get('project') or 'No project reported'
         username = processor.get('username') or ip
         serial = processor.get('serial') or ''
@@ -375,7 +380,31 @@ def home_page(admin: bool = False):
               <div><b>{html_escape(username)}</b><div class="processor-meta">{meta}</div><div class="notice">Please enable IP control to enable monitoring and control</div></div>
               <span class="state">IP control unavailable</span>
             </div>""")
-    discovered_html = ''.join(discovered_rows) if discovered_rows else '<div class="empty">Searching for Tessera processors on the local network...</div>'
+    for processor in list_processors():
+        ip = str(processor.get('ip') or '')
+        if not ip or ip in discovered_ips or ip in ignored_ips:
+            continue
+        name = processor.get('name') or ip
+        meta = f'<span>{html_escape(ip)}</span><span>Seen from processor logs</span>'
+        if ip in monitors:
+            discovered_rows.append(f"""
+            <div class="processor processor-monitored">
+              <div><b>{html_escape(name)}</b><div class="processor-meta">{meta}</div></div>
+              <span class="state">Monitored</span>
+            </div>""")
+        elif processor_ip_control_enabled(ip):
+            discovered_rows.append(f"""
+            <div class="processor processor-ready">
+              <div><b>{html_escape(name)}</b><div class="processor-meta">{meta}</div></div>
+              <form method="post" action="/topology/add"><input type="hidden" name="ip" value="{html_escape(ip)}"><input type="hidden" name="interval" value="10"><input type="hidden" name="return_to" value="/"><button>Add to Monitoring</button></form>
+            </div>""")
+        else:
+            discovered_rows.append(f"""
+            <div class="processor processor-unavailable">
+              <div><b>{html_escape(name)}</b><div class="processor-meta">{meta}</div><div class="notice">Please enable IP control to enable monitoring and control</div></div>
+              <span class="state">IP control unavailable</span>
+            </div>""")
+    discovered_html = ''.join(discovered_rows) if discovered_rows else '<div class="empty">No likely Tessera processors have been seen yet.</div>'
     admin_actions = """
   <a class="action" href="/api-contents"><b>View API Contents</b><span>Browse the simulator's current API state as a searchable table.</span></a>
   <a class="action" href="/god"><b>God Mode</b><span>Edit API endpoints directly to simulate different processor states.</span></a>""" if admin else ''
@@ -404,7 +433,7 @@ a{{color:#8cc7ff}}
   {admin_actions}
 </div>
 <h2>Available Processors</h2>
-<div class="sub">Auto-discovered via Tessera service discovery on the local network.</div>
+<div class="sub">Learned passively from processor traffic and confirmed with API checks when available.</div>
 <div class="processors">{discovered_html}</div>
 {meta_link}
 </main></body></html>""")
@@ -948,11 +977,12 @@ async def topology_page(request: Request, msg: str = '', level: str = 'info'):
     cards = topology_cards_payload()
     cards_wide = get_cards_wide()
     monitored_ips = {str(monitor.get('ip')) for monitor in list_monitors()}
+    ignored_ips = {str(processor.get('ip')) for processor in list_processors() if processor.get('ignored')}
     quick_rows = []
     quick_ips = set()
     for processor in list_discovered_processors():
         ip = str(processor.get('ip') or '')
-        if not ip or ip in monitored_ips or ip in quick_ips:
+        if not ip or ip in monitored_ips or ip in quick_ips or ip in ignored_ips:
             continue
         quick_ips.add(ip)
         name = html_escape(processor.get('username') or ip)
@@ -1115,8 +1145,11 @@ async def topology_add(request: Request):
 @app.get('/discovery/data')
 async def discovery_data():
     monitors = {monitor.get('ip') for monitor in list_monitors()}
+    ignored_ips = {str(processor.get('ip')) for processor in list_processors() if processor.get('ignored')}
     rows = []
     for processor in list_discovered_processors():
+        if processor.get('ip') in ignored_ips:
+            continue
         row = dict(processor)
         if row.get('ip') in monitors:
             row['state'] = 'monitored'

@@ -3,6 +3,8 @@ import re
 import socket
 import threading
 import time
+import os
+import json
 import urllib.request
 from typing import Any
 
@@ -11,6 +13,7 @@ SLP_MULTICAST = ('239.255.255.253', 427)
 DISCOVERY_INTERVAL_SECONDS = 20
 ONLINE_SECONDS = 90
 API_CHECK_SECONDS = 60
+PASSIVE_ONLINE_SECONDS = 10 * 60
 SERVICE_TYPE = 'processor.tessera'
 SCOPE = 'DEFAULT'
 LANGUAGE = 'en'
@@ -22,6 +25,10 @@ DISCOVERY_THREAD: threading.Thread | None = None
 
 def now_epoch() -> float:
     return time.time()
+
+
+def active_slp_discovery_enabled() -> bool:
+    return os.environ.get('TESSERA_ACTIVE_SLP_DISCOVERY', '').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
 def build_slp_header(function: int, xid: int, payload: bytes, flags: int = 0x2000) -> bytes:
@@ -141,6 +148,19 @@ def ip_from_url(url: str) -> str:
     return match.group(1) if match else ''
 
 
+def parse_processor_name(body: str) -> str:
+    try:
+        obj = json.loads(body)
+    except Exception:
+        return body.strip() if body.strip() and len(body.strip()) < 120 else ''
+    if isinstance(obj, dict):
+        name = obj.get('processor-name') or obj.get('data')
+        return name.strip() if isinstance(name, str) else ''
+    if isinstance(obj, str):
+        return obj.strip()
+    return ''
+
+
 def check_api(ip: str, timeout: float = 0.8) -> tuple[bool, str]:
     try:
         req = urllib.request.Request(
@@ -174,6 +194,28 @@ def remember_processor(ip: str, url: str, source_ip: str, attrs: dict[str, str] 
             row['tcpport'] = attrs.get('tcpport') or row.get('tcpport') or ''
 
 
+def remember_passive_processor(ip: str, source: str = 'passive', attrs: dict[str, str] | None = None, api_check: bool = False):
+    ip = (ip or '').strip()
+    if not re.match(r'^\d{1,3}(?:\.\d{1,3}){3}$', ip):
+        return
+    ts = now_epoch()
+    attrs = attrs or {}
+    with DISCOVERY_LOCK:
+        row = DISCOVERED.setdefault(ip, {'ip': ip})
+        row.update({
+            'ip': ip,
+            'url': row.get('url') or f'service:processor.tessera://{ip}',
+            'source_ip': row.get('source_ip') or ip,
+            'last_seen_epoch': ts,
+            'source': source,
+            'passive': True,
+        })
+        row['username'] = attrs.get('username') or row.get('username') or ip
+        row['project'] = attrs.get('project') or row.get('project') or ''
+    if api_check:
+        refresh_api_state(ip)
+
+
 def refresh_api_state(ip: str, force: bool = False):
     ts = now_epoch()
     with DISCOVERY_LOCK:
@@ -183,12 +225,15 @@ def refresh_api_state(ip: str, force: bool = False):
         if not force and ts - float(row.get('api_checked_epoch') or 0) < API_CHECK_SECONDS:
             return
     available, detail = check_api(ip)
+    name = parse_processor_name(detail) if available else ''
     with DISCOVERY_LOCK:
         row = DISCOVERED.get(ip)
         if row:
             row['api_available'] = available
             row['api_checked_epoch'] = ts
             row['api_error'] = '' if available else detail
+            if name:
+                row['username'] = name
 
 
 def discovery_cycle():
@@ -239,6 +284,8 @@ def discovery_loop():
 
 def ensure_discovery_running():
     global DISCOVERY_THREAD
+    if not active_slp_discovery_enabled():
+        return
     with DISCOVERY_LOCK:
         if DISCOVERY_THREAD and DISCOVERY_THREAD.is_alive():
             return
@@ -248,7 +295,7 @@ def ensure_discovery_running():
 
 def list_discovered_processors() -> list[dict[str, Any]]:
     ensure_discovery_running()
-    cutoff = now_epoch() - ONLINE_SECONDS
+    cutoff = now_epoch() - (ONLINE_SECONDS if active_slp_discovery_enabled() else PASSIVE_ONLINE_SECONDS)
     with DISCOVERY_LOCK:
         rows = [dict(row) for row in DISCOVERED.values() if float(row.get('last_seen_epoch') or 0) >= cutoff]
     for row in rows:
