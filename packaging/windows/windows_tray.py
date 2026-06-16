@@ -49,7 +49,11 @@ def settings_path() -> Path:
 
 
 def load_settings() -> dict:
-    defaults = {"http_host": os.environ.get("TESSERA_HTTP_HOST", DEFAULT_HTTP_HOST), "http_port": int(os.environ.get("PORT", str(DEFAULT_HTTP_PORT)))}
+    defaults = {
+        "http_host": os.environ.get("TESSERA_HTTP_HOST", DEFAULT_HTTP_HOST),
+        "http_port": int(os.environ.get("PORT", str(DEFAULT_HTTP_PORT))),
+        "hide_on_launch": False,
+    }
     try:
         with settings_path().open("r", encoding="utf-8") as handle:
             saved = json.load(handle)
@@ -62,6 +66,7 @@ def load_settings() -> dict:
     except Exception:
         defaults["http_port"] = DEFAULT_HTTP_PORT
     defaults["http_host"] = str(defaults.get("http_host") or DEFAULT_HTTP_HOST)
+    defaults["hide_on_launch"] = bool(defaults.get("hide_on_launch"))
     return defaults
 
 
@@ -278,27 +283,31 @@ class ControlWindow:
         self.controller = controller
         self.root = tk.Tk()
         self.root.title(APP_NAME)
-        self.root.geometry("620x560")
+        self.root.geometry("620x680")
+        self.root.minsize(560, 620)
         self.root.configure(bg="#202020")
         self.root.protocol("WM_DELETE_WINDOW", self.hide)
         self.settings = load_settings()
         self.interface_var = tk.StringVar(value=str(self.settings["http_host"]))
         self.port_var = tk.StringVar(value=str(self.settings["http_port"]))
+        self.hide_on_launch_var = tk.BooleanVar(value=bool(self.settings.get("hide_on_launch")))
         self.status_var = tk.StringVar(value="Running")
         self.url_var = tk.StringVar(value=http_url(self.settings))
         self.build()
+        if self.hide_on_launch_var.get():
+            self.root.withdraw()
 
     def build(self) -> None:
         header = tk.Frame(self.root, bg="#202020")
-        header.pack(fill="x", pady=(34, 26))
-        logo = tk.Label(header, text="S.L", font=("Segoe UI", 54, "bold"), fg="#ffffff", bg="#202020")
+        header.pack(fill="x", pady=(22, 18))
+        logo = tk.Label(header, text="S.L", font=("Segoe UI", 48, "bold"), fg="#ffffff", bg="#202020")
         logo.pack()
-        title = tk.Label(header, text=APP_NAME, font=("Segoe UI", 18, "bold"), fg="#ffffff", bg="#202020")
+        title = tk.Label(header, text=APP_NAME, font=("Segoe UI", 17, "bold"), fg="#ffffff", bg="#202020")
         title.pack(pady=(8, 0))
 
         body = tk.Frame(self.root, bg="#c90018")
         body.pack(fill="both", expand=True)
-        tk.Label(body, textvariable=self.status_var, font=("Segoe UI", 42), fg="#f4a0a8", bg="#c90018").pack(pady=(32, 4))
+        tk.Label(body, textvariable=self.status_var, font=("Segoe UI", 38), fg="#f4a0a8", bg="#c90018").pack(pady=(24, 4))
         tk.Label(body, textvariable=self.url_var, font=("Segoe UI", 17, "bold"), fg="#ffffff", bg="#c90018").pack(pady=(0, 30))
 
         controls = tk.Frame(body, bg="#c90018")
@@ -317,11 +326,36 @@ class ControlWindow:
         tk.Entry(port_frame, textvariable=self.port_var, width=8, font=("Segoe UI", 12)).pack(side="left")
         tk.Button(port_frame, text="Change", command=self.apply_settings, font=("Segoe UI", 11, "bold")).pack(side="left", padx=(6, 0))
 
+        tk.Checkbutton(
+            body,
+            text="Hide this window on next launch",
+            variable=self.hide_on_launch_var,
+            command=self.save_window_preferences,
+            font=("Segoe UI", 12, "bold"),
+            fg="#ffffff",
+            bg="#c90018",
+            activebackground="#c90018",
+            activeforeground="#ffffff",
+            selectcolor="#202020",
+        ).pack(pady=(28, 0))
+
         buttons = tk.Frame(body, bg="#c90018")
-        buttons.pack(pady=(44, 0))
+        buttons.pack(pady=(32, 0))
         tk.Button(buttons, text="Launch GUI", command=self.controller.open_web_ui, width=14, font=("Segoe UI", 15)).grid(row=0, column=0, padx=12)
         tk.Button(buttons, text="Hide", command=self.hide, width=10, font=("Segoe UI", 15, "bold")).grid(row=0, column=1, padx=12)
         tk.Button(buttons, text="Quit", command=self.controller.quit, width=10, font=("Segoe UI", 15, "bold")).grid(row=0, column=2, padx=12)
+
+    def current_settings(self) -> dict:
+        return {
+            "http_host": str(self.settings.get("http_host") or DEFAULT_HTTP_HOST),
+            "http_port": int(self.settings.get("http_port") or DEFAULT_HTTP_PORT),
+            "hide_on_launch": bool(self.hide_on_launch_var.get()),
+        }
+
+    def save_window_preferences(self) -> None:
+        settings = self.current_settings()
+        save_settings(settings)
+        self.settings = settings
 
     def apply_settings(self) -> None:
         label = self.interface_combo.get()
@@ -331,7 +365,7 @@ class ControlWindow:
         except Exception:
             messagebox.showerror(APP_NAME, "Port must be a number from 1 to 65535.")
             return
-        save_settings({"http_host": host, "http_port": port})
+        save_settings({"http_host": host, "http_port": port, "hide_on_launch": bool(self.hide_on_launch_var.get())})
         self.settings = load_settings()
         self.url_var.set(http_url(self.settings))
         self.controller.restart_all()

@@ -44,6 +44,16 @@ class TesseraSimulatorSmokeTests(unittest.TestCase):
         self.assertIn('href="/api-contents"', response.text)
         self.assertIn('href="/god"', response.text)
 
+    def test_godmode_navigation_persists_after_hidden_entry(self):
+        response = self.client.get("/logs")
+        self.assertNotIn('href="/api-contents"', response.text)
+
+        self.client.get("/godmode")
+        response = self.client.get("/logs")
+
+        self.assertIn('href="/api-contents"', response.text)
+        self.assertIn('href="/god"', response.text)
+
     def test_api_contents_page_shows_current_state(self):
         response = self.client.get("/api-contents")
 

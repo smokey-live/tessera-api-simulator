@@ -41,6 +41,9 @@ def severity_display(value: Any) -> str:
     label = SYSLOG_SEVERITY_LABELS.get(key, '')
     return f'{key} {label}'.strip()
 
+def admin_mode(request: Request) -> bool:
+    return request.cookies.get('tessera_godmode') == '1'
+
 @app.on_event('startup')
 async def startup_discovery():
     ensure_discovery_running()
@@ -331,11 +334,15 @@ async def api_route(path: str='', request: Request=None):
 
 @app.get('/')
 async def root():
-    return home_page(admin=False)
+    response = home_page(admin=False)
+    response.delete_cookie('tessera_godmode')
+    return response
 
 @app.get('/godmode')
 async def godmode_home():
-    return home_page(admin=True)
+    response = home_page(admin=True)
+    response.set_cookie('tessera_godmode', '1', httponly=True, samesite='lax')
+    return response
 
 def home_page(admin: bool = False):
     ensure_discovery_running()
@@ -445,7 +452,7 @@ th,td{{border-bottom:1px solid #333;padding:8px;vertical-align:top}} tr:hover{{b
     return HTMLResponse(html)
 
 @app.get('/logs', response_class=HTMLResponse)
-async def processor_logs(ip: str = '', limit: int = 500, q: str = '', severity: str = '', msg: str = ''):
+async def processor_logs(request: Request, ip: str = '', limit: int = 500, q: str = '', severity: str = '', msg: str = ''):
     processors = list_processors()
     known_ips = {p['ip'] for p in processors}
     selected_ip = ip if ip in known_ips else ''
@@ -691,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {{
 }});
 </script>
 <body>
-<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP port 514.</div></div>{page_nav('Processor Logs')}</div>
+<div class="top"><div><h1>Processor Logs</h1><div class="sub">Server-timestamped syslog messages received on UDP port 514.</div></div>{page_nav('Processor Logs', admin=admin_mode(request))}</div>
 <div class="statusbar"><div>Storage used by logs: <b id="log-storage-used">{html_escape(storage['db_display'])}</b></div><div class="tzbar"><label for="timezone-select">Display timezone</label><select id="timezone-select"></select></div></div>
 {flash}
 <div class="tabs">{''.join(buttons)}</div>
@@ -780,7 +787,7 @@ async def logs_clear(request: Request):
     return RedirectResponse('/logs' + (('?' + qs) if qs else ''), status_code=303)
 
 @app.get('/logs/manage', response_class=HTMLResponse)
-async def logs_manage(msg: str = '', level: str = 'info'):
+async def logs_manage(request: Request, msg: str = '', level: str = 'info'):
     summary = log_storage_summary()
     rows = []
     for processor in summary['processors']:
@@ -821,7 +828,7 @@ table{{width:100%;border-collapse:collapse;font-size:14px}} th{{position:sticky;
 .actions{{display:flex;gap:8px;flex-wrap:wrap}} .actions form{{display:inline}}
 </style></head>
 <body>
-<div class="top"><div><h1>Manage Processor Logs</h1><div class="sub">Storage, collection state, and processor-specific housekeeping.</div></div>{page_nav('Processor Logs')}</div>
+<div class="top"><div><h1>Manage Processor Logs</h1><div class="sub">Storage, collection state, and processor-specific housekeeping.</div></div>{page_nav('Processor Logs', admin=admin_mode(request))}</div>
 {flash}
 <div class="tools"><a href="/logs">Back to Processor Logs</a>
   <form method="post" action="/logs/manage/delete" onsubmit="return confirm('Delete all stored processor logs?');"><input type="hidden" name="all" value="1"><button class="danger">Delete All Logs</button></form>
@@ -937,7 +944,7 @@ def processor_ip_control_enabled(ip: str) -> bool:
         return False
 
 @app.get('/topology', response_class=HTMLResponse)
-async def topology_page(msg: str = '', level: str = 'info'):
+async def topology_page(request: Request, msg: str = '', level: str = 'info'):
     cards = topology_cards_payload()
     cards_wide = get_cards_wide()
     monitored_ips = {str(monitor.get('ip')) for monitor in list_monitors()}
@@ -1069,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {{
 }});
 </script>
 <body>
-<div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div>{page_nav('Topology Monitoring')}</div>
+<div class="top"><div><h1>Topology Monitoring</h1><div class="sub">Polls only processor name, processor type, and cable redundancy loop state endpoints.</div></div>{page_nav('Topology Monitoring', admin=admin_mode(request))}</div>
 {flash}
 <section class="panel controls">
   <form class="add" method="post" action="/topology/add">
